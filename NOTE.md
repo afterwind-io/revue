@@ -1,0 +1,5 @@
+每个fiber有一个全局唯一的id（自增长）
+全局有个当前所有fiber的索引map？
+mediator收集的fiber依赖需要清理（协程空闲扫描回收？）
+reconcile阶段将全局isRendering置为true，执行用户代码时为false？
+fiber存储所有依赖的mediator，被删除时移除mediator对自己的hook
