@@ -1,4 +1,4 @@
-import { IDictionary } from 'type';
+import { IDictionary } from './type';
 
 export function pureObject<T extends object = IDictionary>(source?: T): T {
   return Object.assign(Object.create(null), source);

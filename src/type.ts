@@ -98,18 +98,16 @@ export interface IFiber {
  * @interface IFiberReferencedElement
  * @extends {Node}
  */
-interface IFiberReferencedElement extends Node {
+export interface IFiberReferencedElement extends Node {
   _rootFiber_?: IFiber;
 }
 
 export type RevueConstructor = new (props: IDictionary) => IRevue;
 
-export interface IRevue<S = any, P = any> {
-  state: S;
+export interface IRevue<P = any> {
   props: P;
   fiber: IFiber;
   _rootFiber_: IFiber;
 
-  setState(stateFn: (state: S, props: P) => Partial<S>): void;
   render(): IElement | IElement[];
 }

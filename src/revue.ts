@@ -1,6 +1,37 @@
+import {
+  IRevue,
+  IFiber,
+  IElement,
+  FiberTag,
+} from './type';
 import { observe } from './reactive';
+import { Fiber } from './fiber';
+import { scheduleWork } from './scheduler';
 
-export class Revue {
+export function mount(el: string | HTMLElement, ...children: IElement[]) {
+  let hostDom;
+  if (typeof el === 'string') {
+    hostDom = document.querySelector(el);
+  } else {
+    hostDom = el;
+  }
+
+  if (!el) throw new Error();
+
+  scheduleWork({
+    from: FiberTag.HOST_ROOT,
+    hostDom,
+    newProp: {
+      children,
+    }
+  });
+}
+
+export class Revue<P = any> implements IRevue<P> {
+  public props: P;
+  public fiber: IFiber = new Fiber();
+  public _rootFiber_: IFiber = new Fiber();
+
   /**
    * 需要响应式字段的声明数组
    *
@@ -10,11 +41,16 @@ export class Revue {
    */
   private $reactiveKeys: string[];
 
-  constructor() {
+  constructor(props?: P) {
     // TODO: 该字段应挂于prototype上
     this.$reactiveKeys = this.initReactiveKeys();
 
+    this.props = props || {} as P;
     this.observeSelf();
+  }
+
+  public render(): IElement | IElement[] {
+    return [];
   }
 
   public $addReactiveKey(key: string) {

@@ -4,11 +4,12 @@ import {
   IMediator,
   IElement,
   ElementType,
+  RevueConstructor,
 } from './type';
 import { pureObject, isFunction } from './util';
 
-type PropFn = () => IProp;
-type ElementFn = () => IElement | any;
+export type PropFn = () => IProp;
+export type ElementFn = () => IElement | any;
 
 /**
  * 创建element
@@ -17,13 +18,13 @@ type ElementFn = () => IElement | any;
  * 在声明时需要用函数包围，以递延求值的过程
  *
  * @export
- * @param {string} type 元素类型
+ * @param {string | RevueConstructor} type 元素类型
  * @param {(PropFn | null)} propfn 生成props的方法，可以为null
  * @param {(...Array<IElement | ElementFn | string>)} children 子元素集
  * @returns {IElement}
  */
 export function createElement(
-  type: string,
+  type: string | RevueConstructor,
   propfn: PropFn | null,
   ...children: Array<IElement | ElementFn | string>
 ): IElement {
@@ -65,7 +66,7 @@ function createChildElements(children: Array<IElement | ElementFn | string>): IE
   });
 }
 
-function createEmptyElement(type: string = ElementType.COMMENT): IElement {
+function createEmptyElement(type: string | RevueConstructor = ElementType.COMMENT): IElement {
   return pureObject<IElement>({
     type,
     props: {},
