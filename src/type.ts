@@ -6,10 +6,43 @@ export interface IProp extends IDictionary<any> {
   children?: IElement[];
 }
 
+/**
+ * 依赖中介者
+ *
+ * 用于建立fiber与依赖数据的响应关系
+ *
+ * @export
+ * @interface IMediator
+ */
+export interface IMediator {
+  /**
+   * 所属fiber的id
+   *
+   * @type {string}
+   * @memberof IMediator
+   */
+  from?: string;
+
+  /**
+   * 所属响应式数据的依赖收集对象
+   *
+   * @type {IDependency}
+   * @memberof IMediator
+   */
+  dep?: IDependency;
+
+  /**
+   * 通知fiber更新的事件
+   *
+   * @memberof IMediator
+   */
+  notify?: () => void;
+}
+
 export interface IElement {
   type: string | ElementType | RevueConstructor;
-  props: IProp | null;
-  mediator?: IMediator;
+  props: IProp;
+  mediator: IMediator;
 }
 
 export const enum ElementType {
@@ -17,27 +50,26 @@ export const enum ElementType {
   COMMENT = '__COMMENT__',
 }
 
-export interface IMediator {
+export interface IDependency {
   value: any;
-  hook(hook: IMediatorHook): void;
+  addDependency(dep: IMediator): void;
+  invoke(): void;
 }
 
-export type IMediatorHook = (value: any) => void;
-
-const enum FiberTag {
+export const enum FiberTag {
   HOST_ROOT,
   HOST_COMPONENT,
   CLASS_COMPONENT,
 }
 
-const enum FiberEffectTag {
+export const enum FiberEffectTag {
   NONE,
   PLACEMENT,
   DELETION,
   UPDATE,
 }
 
-interface IFiber {
+export interface IFiber {
   tag: FiberTag;
   type: string | ElementType | RevueConstructor;
   prop: IProp;
@@ -70,14 +102,14 @@ interface IFiberReferencedElement extends Node {
   _rootFiber_?: IFiber;
 }
 
-export type RevueConstructor = new (prop: IDictionary) => IRevue;
+export type RevueConstructor = new (props: IDictionary) => IRevue;
 
 export interface IRevue<S = any, P = any> {
   state: S;
-  prop: P;
+  props: P;
   fiber: IFiber;
   _rootFiber_: IFiber;
 
-  setState(stateFn: (state: S, prop: P) => Partial<S>): void;
+  setState(stateFn: (state: S, props: P) => Partial<S>): void;
   render(): IElement | IElement[];
 }

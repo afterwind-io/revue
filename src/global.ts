@@ -1,5 +1,17 @@
-const _isRendering: boolean = false;
+import { IMediator } from './type';
 
-export function isRendering(): boolean {
-  return _isRendering;
+// const _isRendering: boolean = false;
+
+// export function isRendering(): boolean {
+//   return _isRendering;
+// }
+
+interface IGlobals {
+  targetMediator: IMediator | null;
 }
+
+const globals: IGlobals = {
+  targetMediator: null
+};
+
+export default globals;
