@@ -9,13 +9,15 @@ class App extends Revue {
   public name: string = 'Doge';
   @Prop
   public className: string = '';
+  @Prop
+  public isHappy: boolean = false;
 
   public get title(): string {
     return this.greeting + this.name;
   }
 
   public render() {
-    const e = h('h1', null,
+    const e = h(() => this.isHappy ? 'h1' : 'p', null,
       () => this.greeting,
       () => this.title,
       h('p',
@@ -25,15 +27,17 @@ class App extends Revue {
     );
 
     // @ts-ignore
-    e.props.children[0].mediator.notify = () => console.log('greeting changed');
+    e.mediator.update = (tag: string) => console.log('isHappy changed, type:', tag);
     // @ts-ignore
-    e.props.children[1].mediator.notify = () => console.log('title changed');
+    e.props.children[0].mediator.update = (tag: string) => console.log('greeting changed, type:', tag);
     // @ts-ignore
-    e.props.children[2].mediator.notify = () => console.log('className changed');
+    e.props.children[1].mediator.update = (tag: string) => console.log('title changed, type:', tag);
     // @ts-ignore
-    e.props.children[2].props.children[0].mediator.notify = () => console.log('name changed');
-    console.log(e);
+    e.props.children[2].mediator.update = (tag: string) => console.log('className changed, type:', tag);
+    // @ts-ignore
+    e.props.children[2].props.children[0].mediator.update = (tag: string) => console.log('name changed, type:', tag);
 
+    console.log(e);
     return e;
   }
 }
@@ -41,6 +45,7 @@ const app = new App();
 app.render();
 console.log(app);
 
+app.isHappy = true;
 app.greeting = 'Doge';
 app.name = 'wow';
 app.className = '666';

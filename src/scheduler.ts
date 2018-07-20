@@ -6,7 +6,7 @@ import {
   IRevue,
   FiberTag,
   FiberEffectTag,
-  RevueConstructor,
+  IRevueConstructor,
 } from './type';
 import { Fiber } from './fiber';
 import { createDomElement, updateDomAttributes } from './dom';
@@ -158,7 +158,7 @@ function updateClassComponent(workUnit: IFiber) {
 }
 
 function createInstance(fiber: IFiber) {
-  const constructor = fiber.type as RevueConstructor;
+  const constructor = fiber.type as IRevueConstructor;
   const instance = new constructor(fiber.prop);
   instance.fiber = fiber;
   return instance;

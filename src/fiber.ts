@@ -7,14 +7,14 @@ import {
   IFiberReferencedElement,
   IFiber,
   IRevue,
-  RevueConstructor,
+  IRevueConstructor,
 } from './type';
 
 interface IFiberOptions extends Partial<IFiber> { }
 
 class Fiber implements IFiber {
   public tag: FiberTag;
-  public type: string | ElementType | RevueConstructor;
+  public type: string | ElementType | IRevueConstructor;
   public prop: IProp;
   public parent: IFiber | null;
   public sibling: IFiber | null;

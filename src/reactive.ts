@@ -15,8 +15,8 @@ class Dependency implements IDependency {
   }
 
   public invoke() {
-    this.deps.forEach(dep => {
-      if (dep.notify) dep.notify();
+    this.deps.forEach(mediator => {
+      if (mediator.notify) mediator.notify();
     });
   }
 }
@@ -38,6 +38,14 @@ export function observe(obj: any, key: string) {
       const mediator = globals.targetMediator;
       if (mediator) {
         mediator.dep = dep;
+
+        // 使用闭包保存正确的effectTag，
+        // 因为mediator.tag在后续操作中可能发生变动
+        const effectTag = mediator.tag;
+        mediator.notify = function () {
+          if (this.update) this.update(effectTag);
+        };
+
         dep.addDependency(mediator);
       }
 

@@ -28,6 +28,8 @@ export function mount(el: string | HTMLElement, ...children: IElement[]) {
 }
 
 export class Revue<P = any> implements IRevue<P> {
+  public static isConstructor: boolean = true;
+
   public props: P;
   public fiber: IFiber = new Fiber();
   public _rootFiber_: IFiber = new Fiber();

@@ -7,6 +7,22 @@ export interface IProp extends IDictionary<any> {
 }
 
 /**
+ * 中介者相应类型标记
+ * 
+ * 当数据变化导致fiber树变动时，需要该标记来指示
+ * 受到影响的类型，以执行更优的render策略
+ *
+ * @export
+ * @enum {number}
+ */
+export const enum MediatorEffectTag {
+  Unknown,
+  Type,
+  Prop,
+  Child,
+}
+
+/**
  * 依赖中介者
  *
  * 用于建立fiber与依赖数据的响应关系
@@ -15,6 +31,14 @@ export interface IProp extends IDictionary<any> {
  * @interface IMediator
  */
 export interface IMediator {
+  /**
+   * 依赖影响的元素属性
+   *
+   * @type {MediatorEffectTag}
+   * @memberof IMediator
+   */
+  tag: MediatorEffectTag;
+
   /**
    * 所属fiber的id
    *
@@ -32,23 +56,49 @@ export interface IMediator {
   dep?: IDependency;
 
   /**
-   * 通知fiber更新的事件
+   * 用于建立element树的元数据
+   *
+   * @type {IElementMeta}
+   * @memberof IMediator
+   */
+  meta: IElementMeta;
+
+  /**
+   * 通知fiber更新
    *
    * @memberof IMediator
    */
   notify?: () => void;
+
+  /**
+   * fiber更新方法
+   *
+   * @memberof IMediator
+   */
+  update?: (type: MediatorEffectTag) => void;
 }
 
 export interface IElement {
-  type: string | ElementType | RevueConstructor;
+  type: string | ElementType | IRevueConstructor;
   props: IProp;
   mediator: IMediator;
 }
 
+export interface IElementMeta {
+  type: ElementTypeFn | string | IRevueConstructor;
+  propfn: ElementPropFn | null;
+  children: Array<ElementChildFn | IElement | string>;
+}
+
 export const enum ElementType {
+  UNKNOWN = '__UNKNOWN__',
   TEXT = '__TEXT__',
   COMMENT = '__COMMENT__',
 }
+
+export type ElementTypeFn = () => string | IRevueConstructor;
+export type ElementPropFn = () => IProp;
+export type ElementChildFn = () => IElement | any;
 
 export interface IDependency {
   value: any;
@@ -71,7 +121,7 @@ export const enum FiberEffectTag {
 
 export interface IFiber {
   tag: FiberTag;
-  type: string | ElementType | RevueConstructor;
+  type: string | ElementType | IRevueConstructor;
   prop: IProp;
 
   parent: IFiber | null;
@@ -102,7 +152,10 @@ export interface IFiberReferencedElement extends Node {
   _rootFiber_?: IFiber;
 }
 
-export type RevueConstructor = new (props: IDictionary) => IRevue;
+export interface IRevueConstructor {
+  new(props: IDictionary): IRevue;
+  isConstructor: boolean;
+}
 
 export interface IRevue<P = any> {
   props: P;
