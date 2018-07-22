@@ -1,13 +1,30 @@
 import globals from './global';
-import { IDependency, IMediator } from './type';
+import { IDependency, IMediator, MediatorEffectTag } from './type';
 
 class Dependency implements IDependency {
   public value: any = null;
   public deps: IMediator[] = [];
 
   public addDependency(mediator: IMediator) {
-    // TODO: 去重？
-    this.deps.push(mediator);
+    let lastEffectTag = MediatorEffectTag.Unknown;
+
+    if (this.deps.includes(mediator)) {
+      // 如果同个element的多个属性（如type和props）
+      // 同时依赖于同一个数据，则需要调用notify从闭包中读取
+      // 之前写入的effectTag，将其与当前effectTag合并写入新闭包
+      mediator.update = (tag: MediatorEffectTag) => lastEffectTag = tag;
+      (mediator.notify as () => void)();
+      delete mediator.update;
+    } else {
+      this.deps.push(mediator);
+    }
+
+    // 使用闭包保存effectTag，因为mediator.tag是一个
+    // 当前element的临时缓存值，在后续操作中可能发生变动
+    const effectTag = mediator.tag | lastEffectTag;
+    mediator.notify = function () {
+      if (this.update) this.update(effectTag);
+    };
   }
 
   public removeDependency() {
@@ -38,17 +55,6 @@ export function observe(obj: any, key: string) {
       const mediator = globals.targetMediator;
       if (mediator) {
         mediator.dep = dep;
-
-        // TODO: 如果单个element的多个属性（type, props）
-        // 依赖同个数据，此处会导致重复收集依赖
-
-        // 使用闭包保存正确的effectTag，
-        // 因为mediator.tag在后续操作中可能发生变动
-        const effectTag = mediator.tag;
-        mediator.notify = function () {
-          if (this.update) this.update(effectTag);
-        };
-
         dep.addDependency(mediator);
         console.log('[dep]', key, mediator);
       }

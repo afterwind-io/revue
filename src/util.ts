@@ -15,3 +15,14 @@ export function toPlainString(content: Serializable) {
     return content + '';
   }
 }
+
+export function findNreplace<T>(arr: T[], source: T, predicate: (el: T) => boolean): T | undefined {
+  const index = arr.findIndex(predicate)
+  if (index === -1) {
+    return undefined
+  } else {
+    const target = arr[index]
+    arr[index] = source
+    return target
+  }
+}

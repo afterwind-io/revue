@@ -25,6 +25,7 @@
       {
         "esSpecCompliant": true
       }
-    ]
+    ],
+    "no-bitwise": false
   }
 }

@@ -19,16 +19,16 @@ class App extends Revue {
   private renderHeader() {
     return () => [
       h('h1', null, () => this.title),
-      () => this.isHappy,
+      () => this.name,
     ];
   }
 
   public render() {
-    const e = h(() => this.isHappy ? 'h1' : 'p', null,
+    const e = h(() => this.isHappy ? 'h1' : 'p', () => ({ class: this.isHappy }),
       this.renderHeader(),
       h('p',
         () => ({ class: this.className }),
-        () => this.name
+        'wow'
       ),
     );
 

@@ -18,10 +18,10 @@ export interface IProp extends IDictionary<any> {
  * @enum {number}
  */
 export const enum MediatorEffectTag {
-  Unknown,
-  Type,
-  Prop,
-  Child,
+  Unknown = 0,
+  Type = 1,
+  Prop = 2,
+  Child = 4,
 }
 
 /**

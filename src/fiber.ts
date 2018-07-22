@@ -8,6 +8,7 @@ import {
   IFiber,
   IRevue,
   IRevueConstructor,
+  IMediator,
 } from './type';
 
 interface IFiberOptions extends Partial<IFiber> { }
@@ -21,6 +22,7 @@ class Fiber implements IFiber {
   public child: IFiber | null;
   public stateNode: IRevue | IFiberReferencedElement | null;
   public alternate: IFiber | null;
+  // public mediator: IMediator | null;
   public partialState: IDictionary | null;
   public effectTag: FiberEffectTag;
   public effects: IFiber[];
@@ -35,8 +37,15 @@ class Fiber implements IFiber {
     this.stateNode = options.stateNode || null;
     this.alternate = options.alternate || null;
     this.partialState = options.partialState || null;
+    // this.mediator = options.mediator || null;
     this.effectTag = options.effectTag || FiberEffectTag.NONE;
     this.effects = options.effects || [];
+  }
+
+  public linkMediator(mediator: IMediator) {
+    // this.mediator = mediator;
+    // mediator.from = this.id;
+    // mediator.update = ()
   }
 }
 
