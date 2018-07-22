@@ -1,12 +1,12 @@
 import {
   IElement,
+  ElementChild,
   ElementPropFn,
-  ElementChildFn,
 } from './type';
 import { createElement as h } from './element';
 
 function el(type: string) {
-  return (propfn: ElementPropFn | null, ...children: Array<ElementChildFn | IElement | string>): IElement => {
+  return (propfn: ElementPropFn | null, ...children: ElementChild[]): IElement => {
     return h(type, propfn, ...children);
   };
 }
