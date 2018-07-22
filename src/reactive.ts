@@ -39,6 +39,9 @@ export function observe(obj: any, key: string) {
       if (mediator) {
         mediator.dep = dep;
 
+        // TODO: 如果单个element的多个属性（type, props）
+        // 依赖同个数据，此处会导致重复收集依赖
+
         // 使用闭包保存正确的effectTag，
         // 因为mediator.tag在后续操作中可能发生变动
         const effectTag = mediator.tag;
@@ -47,6 +50,7 @@ export function observe(obj: any, key: string) {
         };
 
         dep.addDependency(mediator);
+        console.log('[dep]', key, mediator);
       }
 
       return originValue;

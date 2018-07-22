@@ -2,6 +2,8 @@ export interface IDictionary<T = any> {
   [key: string]: T;
 }
 
+export type Serializable = object | string | number | boolean | null | undefined;
+
 export interface IProp extends IDictionary<any> {
   children?: IElement[];
 }
@@ -87,7 +89,7 @@ export interface IElement {
 export interface IElementMeta {
   type: ElementTypeFn | string | IRevueConstructor;
   propfn: ElementPropFn | null;
-  children: Array<ElementChildFn | IElement | string>;
+  children: ElementChild[];
 }
 
 export const enum ElementType {
@@ -96,9 +98,11 @@ export const enum ElementType {
   COMMENT = '__COMMENT__',
 }
 
+export type ElementChild = ElementChildFn | IElement | IElement[] | Serializable;
+
 export type ElementTypeFn = () => string | IRevueConstructor;
 export type ElementPropFn = () => IProp;
-export type ElementChildFn = () => IElement | any;
+export type ElementChildFn = () => IElement | IElement[] | Serializable;
 
 export interface IDependency {
   value: any;

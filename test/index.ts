@@ -16,10 +16,16 @@ class App extends Revue {
     return this.greeting + this.name;
   }
 
+  private renderHeader() {
+    return () => [
+      h('h1', null, () => this.title),
+      () => this.isHappy,
+    ];
+  }
+
   public render() {
     const e = h(() => this.isHappy ? 'h1' : 'p', null,
-      () => this.greeting,
-      () => this.title,
+      this.renderHeader(),
       h('p',
         () => ({ class: this.className }),
         () => this.name
@@ -27,28 +33,25 @@ class App extends Revue {
     );
 
     // @ts-ignore
-    e.mediator.update = (tag: string) => console.log('isHappy changed, type:', tag);
+    // e.mediator.update = (tag: string) => console.log('isHappy changed, type:', tag);
     // @ts-ignore
-    e.props.children[0].mediator.update = (tag: string) => console.log('greeting changed, type:', tag);
+    // e.props.children[0].mediator.update = (tag: string) => console.log('greeting changed, type:', tag);
     // @ts-ignore
-    e.props.children[1].mediator.update = (tag: string) => console.log('title changed, type:', tag);
+    // e.props.children[1].mediator.update = (tag: string) => console.log('title changed, type:', tag);
     // @ts-ignore
-    e.props.children[2].mediator.update = (tag: string) => console.log('className changed, type:', tag);
+    // e.props.children[2].mediator.update = (tag: string) => console.log('className changed, type:', tag);
     // @ts-ignore
-    e.props.children[2].props.children[0].mediator.update = (tag: string) => console.log('name changed, type:', tag);
+    // e.props.children[2].props.children[0].mediator.update = (tag: string) => console.log('name changed, type:', tag);
 
     console.log(e);
     return e;
   }
 }
-const app = new App();
-app.render();
-console.log(app);
 
-app.isHappy = true;
-app.greeting = 'Doge';
-app.name = 'wow';
-app.className = '666';
+// app.isHappy = true;
+// app.greeting = 'Doge';
+// app.name = 'wow';
+// app.className = '666';
 
 mount('#app', h(App, null));
 

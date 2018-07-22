@@ -1,10 +1,12 @@
 import globals from './global';
 import {
+  Serializable,
   IProp,
   MediatorEffectTag,
   IMediator,
   IElement,
   ElementType,
+  ElementChild,
   ElementTypeFn,
   ElementPropFn,
   ElementChildFn,
@@ -26,13 +28,13 @@ import {
  * @export
  * @param {(ElementTypeFn | string | IRevueConstructor)} type 元素类型
  * @param {(ElementPropFn | null)} propfn 生成props的方法，可以为null
- * @param {(...Array<ElementChildFn | IElement | string>)} children 子元素集
+ * @param {ElementChild[]} children 子元素集
  * @returns {IElement}
  */
 export function createElement(
   type: ElementTypeFn | string | IRevueConstructor,
   propfn: ElementPropFn | null,
-  ...children: Array<ElementChildFn | IElement | string>
+  ...children: ElementChild[]
 ): IElement {
   const element: IElement = createEmptyElement(type, propfn, children);
   const mediator = globals.targetMediator = element.mediator;
@@ -44,7 +46,6 @@ export function createElement(
     element.type = (type as string | IRevueConstructor);
   }
 
-  // 获取props，并从globals.targetElement收集依赖
   if (propfn) {
     mediator.tag = MediatorEffectTag.Prop;
     element.props = propfn();
@@ -57,33 +58,35 @@ export function createElement(
   return element;
 }
 
-function createChildElements(children: Array<ElementChildFn | IElement | string>): IElement[] {
-  return children.map(child => {
+function createChildElements(children: ElementChild[]): IElement[] {
+  return children.reduce<IElement[]>((arr, child) => {
     const childElement: IElement = createTextElement('');
     globals.targetMediator = childElement.mediator;
     childElement.mediator.tag = MediatorEffectTag.Child;
 
+    let node: IElement | IElement[] | Serializable;
     if (isFunction(child)) {
-      // 如果子元素类型为包含响应式字段依赖表达式的方法，
-      // 在收集依赖后作为文本节点处理
-      const value = (child as ElementChildFn)();
-      childElement.props.textContent = toPlainString(value);
-    } else if (typeof child === 'object') {
-      // 如果子元素类型为对象，当做Element类型直接返回
-      return child as IElement;
+      node = (child as ElementChildFn)();
     } else {
-      // 如果子元素类型为其他任意值，当做文本节点处理
-      childElement.props.textContent = toPlainString(child as string);
+      node = child;
     }
 
-    return childElement;
-  });
+    if (Array.isArray(node)) {
+      return arr.concat(createChildElements(node as IElement[]));
+    } else if (typeof node === 'object' && node) {
+      return arr.concat(node as IElement);
+    } else {
+      childElement.props.textContent = toPlainString(node);
+    }
+
+    return arr.concat(childElement);
+  }, []);
 }
 
 function createEmptyElement(
   type: ElementTypeFn | string | IRevueConstructor,
   propfn: ElementPropFn | null,
-  children: Array<ElementChildFn | IElement | string>,
+  children: ElementChild[],
 ): IElement {
   return pureObject<IElement>({
     type: ElementType.UNKNOWN,
@@ -107,8 +110,5 @@ function createMediator(meta: IElementMeta): IMediator {
   return pureObject<IMediator>({
     tag: MediatorEffectTag.Unknown,
     meta,
-    notify() {
-      if (this.update) this.update(this.tag);
-    },
   });
 }
