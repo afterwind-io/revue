@@ -1,5 +1,8 @@
 import { IDictionary, Serializable } from './type';
 
+// tslint:disable-next-line:no-empty
+export function noop() { }
+
 export function pureObject<T extends object = IDictionary>(source?: T): T {
   return Object.assign(Object.create(null), source);
 }
@@ -17,12 +20,12 @@ export function toPlainString(content: Serializable) {
 }
 
 export function findNreplace<T>(arr: T[], source: T, predicate: (el: T) => boolean): T | undefined {
-  const index = arr.findIndex(predicate)
+  const index = arr.findIndex(predicate);
   if (index === -1) {
-    return undefined
+    return undefined;
   } else {
-    const target = arr[index]
-    arr[index] = source
-    return target
+    const target = arr[index];
+    arr[index] = source;
+    return target;
   }
 }

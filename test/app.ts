@@ -1,5 +1,5 @@
 import { Revue } from '../src/revue';
-import { Prop } from '../src/decorators';
+import { Observable } from '../src/decorators';
 import { createElement as h } from '../src/element';
 import {
   h1,
@@ -20,13 +20,13 @@ const TODOS: ITodo[] = [
 ];
 
 export default class App extends Revue {
-  @Prop
+  @Observable
   private name: string = 'Doge';
-  @Prop
+  @Observable
   private isHappy: boolean = true;
-  @Prop
+  @Observable
   private todos: ITodo[] = TODOS;
-  @Prop
+  @Observable
   private todoCache: string = '';
   private greeting: string = 'Hello World';
 
@@ -114,10 +114,6 @@ export default class App extends Revue {
         'Add',
       ),
       this.todos.map((todo, index) =>
-        // h(Todo, () => ({
-        //   data: todo,
-        //   changed: (t: ITodo, isImportant: boolean) => this.onTodoChanged(t, isImportant),
-        // })),
         p(null,
           button(
             () => ({
@@ -127,7 +123,11 @@ export default class App extends Revue {
             }),
             'Remove',
           ),
-          todo.work,
+          h(Todo, () => ({
+            data: () => todo,
+            changed: (t: ITodo, isImportant: boolean) => this.onTodoChanged(t, isImportant),
+          })),
+          // () => todo.work,
         ),
       ),
     ];

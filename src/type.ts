@@ -9,6 +9,24 @@ export interface IProp extends IDictionary<any> {
 }
 
 /**
+ * 中介者类型
+ *
+ * @export
+ * @enum {number}
+ */
+export const enum MediatorType {
+  /**
+   * 数据之间的依赖
+   */
+  Data,
+
+  /**
+   * 数据与元素之间的依赖
+   */
+  Element,
+}
+
+/**
  * 中介者相应类型标记
  * 
  * 当数据变化导致fiber树变动时，需要该标记来指示
@@ -27,27 +45,20 @@ export const enum MediatorEffectTag {
 /**
  * 依赖中介者
  *
- * 用于建立fiber与依赖数据的响应关系
+ * 连接数据与其依赖者，缓存必要的信息，
+ * 并作为发起响应式通知的中间对象
  *
  * @export
  * @interface IMediator
  */
 export interface IMediator {
   /**
-   * 依赖影响的元素属性
+   * 中介者类型
    *
-   * @type {MediatorEffectTag}
+   * @type {MediatorType}
    * @memberof IMediator
    */
-  tag: MediatorEffectTag;
-
-  /**
-   * 所属fiber的id
-   *
-   * @type {string}
-   * @memberof IMediator
-   */
-  from?: string;
+  type: MediatorType;
 
   /**
    * 所属响应式数据的依赖收集对象
@@ -58,6 +69,54 @@ export interface IMediator {
   dep?: IDependency;
 
   /**
+   * 通知依赖者更新的入口
+   *
+   * @memberof IMediator
+   */
+  notify?: () => void;
+}
+
+/**
+ * 用于连接数据之间的中介对象
+ *
+ * @export
+ * @interface IDataMediator
+ * @extends {IMediator}
+ */
+export interface IDataMediator extends IMediator {
+  /**
+   * 依赖数据的响应方法
+   *
+   * @memberof IDataMediator
+   */
+  update?: (value: any) => void;
+}
+
+/**
+ * 用于连接fiber, element与数据的中介对象
+ *
+ * @export
+ * @interface IElementMediator
+ * @extends {IMediator}
+ */
+export interface IElementMediator extends IMediator {
+  /**
+   * 依赖影响的元素属性
+   *
+   * @type {MediatorEffectTag}
+   * @memberof IMediator
+   */
+  effectTag: MediatorEffectTag;
+
+  /**
+   * 所属fiber的id
+   *
+   * @type {string}
+   * @memberof IMediator
+   */
+  from?: string;
+
+  /**
    * 用于建立element树的元数据
    *
    * @type {IElementMeta}
@@ -66,14 +125,7 @@ export interface IMediator {
   meta: IElementMeta;
 
   /**
-   * 通知fiber更新
-   *
-   * @memberof IMediator
-   */
-  notify?: () => void;
-
-  /**
-   * fiber更新方法
+   * fiber更新的响应方法
    *
    * @memberof IMediator
    */
@@ -83,7 +135,7 @@ export interface IMediator {
 export interface IElement {
   type: string | ElementType | IRevueConstructor;
   props: IProp;
-  mediator: IMediator;
+  mediator: IElementMediator;
 }
 
 export interface IElementMeta {
@@ -106,7 +158,7 @@ export type ElementChildFn = () => IElement | IElement[] | Serializable;
 
 export interface IDependency {
   value: any;
-  addDependency(dep: IMediator): void;
+  addDependency(dep: IDataMediator | IElementMediator): void;
   invoke(): void;
 }
 
@@ -165,6 +217,8 @@ export interface IRevue<P = any> {
   props: P;
   fiber: IFiber;
   _rootFiber_: IFiber;
+
+  destoryed(): void;
 
   render(): IElement | IElement[];
 }

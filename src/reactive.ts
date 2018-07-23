@@ -1,11 +1,40 @@
+import {
+  IDependency,
+  MediatorType,
+  MediatorEffectTag,
+  IMediator,
+  IElementMediator,
+  IDataMediator,
+} from './type';
 import globals from './global';
-import { IDependency, IMediator, MediatorEffectTag } from './type';
+
+function isElementMediator(mediator: IDataMediator | IElementMediator): mediator is IElementMediator {
+  return mediator.type === MediatorType.Element;
+}
 
 class Dependency implements IDependency {
   public value: any = null;
   public deps: IMediator[] = [];
 
-  public addDependency(mediator: IMediator) {
+  public addDependency(mediator: IDataMediator | IElementMediator) {
+    if (isElementMediator(mediator)) {
+      this.addElementDependency(mediator);
+    } else {
+      this.addDataDependency(mediator);
+    }
+  }
+
+  public removeDependency() {
+    // TODO: 可能会把首次添加的mediator删除
+  }
+
+  public invoke() {
+    this.deps.forEach(mediator => {
+      if (mediator.notify) mediator.notify();
+    });
+  }
+
+  private addElementDependency(mediator: IElementMediator) {
     let lastEffectTag = MediatorEffectTag.Unknown;
 
     if (this.deps.includes(mediator)) {
@@ -19,22 +48,21 @@ class Dependency implements IDependency {
       this.deps.push(mediator);
     }
 
-    // 使用闭包保存effectTag，因为mediator.tag是一个
+    // 使用闭包保存effectTag，因为mediator.effectTag是
     // 当前element的临时缓存值，在后续操作中可能发生变动
-    const effectTag = mediator.tag | lastEffectTag;
+    const effectTag = mediator.effectTag | lastEffectTag;
     mediator.notify = function () {
       if (this.update) this.update(effectTag);
     };
   }
 
-  public removeDependency() {
-    // TODO: 可能会把首次添加的mediator删除
-  }
+  private addDataDependency(mediator: IDataMediator) {
+    if (this.deps.includes(mediator)) return;
 
-  public invoke() {
-    this.deps.forEach(mediator => {
-      if (mediator.notify) mediator.notify();
-    });
+    this.deps.push(mediator);
+    mediator.notify = function () {
+      if (this.update) this.update(this.dep!.value);
+    };
   }
 }
 
@@ -44,8 +72,7 @@ export function makeReactive(obj: any) {
 
 export function observe(obj: any, key: string) {
   const dep: IDependency = new Dependency();
-
-  let originValue = dep.value = obj[key];
+  dep.value = obj[key];
 
   // TODO: 缓存用户设定的getter, setter
   // const originGetter = ...
@@ -56,14 +83,15 @@ export function observe(obj: any, key: string) {
       if (mediator) {
         mediator.dep = dep;
         dep.addDependency(mediator);
-        console.log('[dep]', key, mediator);
+        console.log('[dep]', key, mediator, dep);
       }
 
-      return originValue;
+      return dep.value;
     },
     set(value: any) {
-      originValue = value;
+      dep.value = value;
       dep.invoke();
-    }
+    },
+    enumerable: false,
   });
 }

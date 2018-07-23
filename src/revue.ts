@@ -3,10 +3,14 @@ import {
   IFiber,
   IElement,
   FiberTag,
+  MediatorType,
+  IDataMediator,
 } from './type';
+import globals from './global';
 import { observe } from './reactive';
 import { Fiber } from './fiber';
 import { scheduleWork } from './scheduler';
+import { noop } from './util';
 
 export function mount(el: string | HTMLElement, ...children: IElement[]) {
   let hostDom;
@@ -35,22 +39,42 @@ export class Revue<P = any> implements IRevue<P> {
   public _rootFiber_: IFiber = new Fiber();
 
   /**
-   * 需要响应式字段的声明数组
+   * 需要做响应式处理的字段名称数组
    *
    * @private
    * @type {string[]}
    * @memberof Revue
    */
-  private $reactiveKeys: string[] = [];
+  private $observables!: string[];
+
+  /**
+   * 用于实例化时处理的props元数据
+   *
+   * @private
+   * @type {string[]}
+   * @memberof Revue
+   */
+  private $props!: string[];
+
+  /**
+   * 用于实例化时处理的emit元数据
+   *
+   * @private
+   * @type {string[]}
+   * @memberof Revue
+   */
+  private $emits!: string[];
 
   constructor(props?: P) {
-    // HACK: 当派生类实例化时，真正需要的$reactiveKeys字段
-    // 已经在相应的Revue.prototype上生成，故此处删除
-    // 自身的$reactiveKeys字段
-    delete this.$reactiveKeys;
-
     this.props = props || {} as P;
+
     this.observeSelf();
+    this.observeProps();
+    this.observeEmits();
+  }
+
+  public destoryed() {
+    // TODO: 如何删除props的依赖关系？
   }
 
   public render(): IElement | IElement[] {
@@ -58,8 +82,32 @@ export class Revue<P = any> implements IRevue<P> {
   }
 
   private observeSelf() {
-    if (this.$reactiveKeys) {
-      this.$reactiveKeys.forEach(key => observe(this, key));
-    }
+    const observables = this.$observables || [];
+    observables.forEach(key => observe(this, key));
+  }
+
+  private observeProps() {
+    const props = this.$props || [];
+    props.forEach(key => {
+      // TODO: 将mediator缓存至$props以便在实例销毁时清除依赖
+      const mediator: IDataMediator = globals.targetMediator = {
+        type: MediatorType.Data,
+        // @ts-ignore
+        update: value => this[key] = value,
+      };
+
+      // @ts-ignore
+      this[key] = this.props[key]();
+      observe(this, key);
+    });
+  }
+
+  private observeEmits() {
+    const emits = this.$emits || [];
+    emits.forEach(key =>
+      Object.defineProperty(this, key, {
+        value: (this.props as any)[key] || noop,
+      }),
+    );
   }
 }

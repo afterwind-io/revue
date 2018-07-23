@@ -1,20 +1,18 @@
 import { Revue } from '../src/revue';
-import { Prop } from '../src/decorators';
+import { Prop, Emit } from '../src/decorators';
 import { p, input } from '../src/element.util';
 
 import { ITodo } from './test.type';
 
 export default class Todo extends Revue {
   @Prop
-  private data: ITodo = { work: '', isImportant: false };
+  private data!: ITodo;
 
-  // @Event
-  private changed: ((todo: ITodo, isImportant: boolean) => void) | null = null;
+  @Emit
+  private changed!: ((todo: ITodo, isImportant: boolean) => void);
 
-  private onImportantceChanged(e: Event) {
-    if (this.changed) {
-      this.changed(this.data, (e.target as HTMLInputElement).checked);
-    }
+  private onImportanceChanged(e: Event) {
+    this.changed(this.data, (e.target as HTMLInputElement).checked);
   }
 
   public render() {
@@ -26,7 +24,7 @@ export default class Todo extends Revue {
             checked: this.data.isImportant,
           },
           on: {
-            change: (e: Event) => this.onImportantceChanged(e),
+            change: (e: Event) => this.onImportanceChanged(e),
           },
         }),
       ),

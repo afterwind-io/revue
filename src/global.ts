@@ -11,7 +11,7 @@ interface IGlobals {
 }
 
 const globals: IGlobals = {
-  targetMediator: null
+  targetMediator: null,
 };
 
 export default globals;

@@ -2,8 +2,9 @@ import globals from './global';
 import {
   Serializable,
   IProp,
+  MediatorType,
   MediatorEffectTag,
-  IMediator,
+  IElementMediator,
   IElement,
   ElementType,
   ElementChild,
@@ -39,15 +40,15 @@ export function createElement(
   const element: IElement = createEmptyElement(type, propfn, children);
   const mediator = globals.targetMediator = element.mediator;
 
-  if (isFunction(type) && !(type as IRevueConstructor).isConstructor) {
-    mediator.tag = MediatorEffectTag.Type;
-    element.type = (type as ElementTypeFn)();
+  if (isElementTypeFn(type)) {
+    mediator.effectTag = MediatorEffectTag.Type;
+    element.type = type();
   } else {
     element.type = (type as string | IRevueConstructor);
   }
 
   if (propfn) {
-    mediator.tag = MediatorEffectTag.Prop;
+    mediator.effectTag = MediatorEffectTag.Prop;
     element.props = propfn();
   }
 
@@ -62,7 +63,7 @@ function createChildElements(children: ElementChild[]): IElement[] {
   return children.reduce<IElement[]>((arr, child) => {
     const childElement: IElement = createTextElement('');
     globals.targetMediator = childElement.mediator;
-    childElement.mediator.tag = MediatorEffectTag.Child;
+    childElement.mediator.effectTag = MediatorEffectTag.Child;
 
     let node: IElement | IElement[] | Serializable;
     if (isFunction(child)) {
@@ -73,7 +74,7 @@ function createChildElements(children: ElementChild[]): IElement[] {
 
     if (Array.isArray(node)) {
       return arr.concat(createChildElements(node as IElement[]));
-    } else if (typeof node === 'object' && node) {
+    } else if (isElement(node)) {
       return arr.concat(node as IElement);
     } else {
       childElement.props.textContent = toPlainString(node);
@@ -106,9 +107,18 @@ function createTextElement(content: any) {
   });
 }
 
-function createMediator(meta: IElementMeta): IMediator {
-  return pureObject<IMediator>({
-    tag: MediatorEffectTag.Unknown,
+function createMediator(meta: IElementMeta): IElementMediator {
+  return pureObject<IElementMediator>({
+    type: MediatorType.Element,
+    effectTag: MediatorEffectTag.Unknown,
     meta,
   });
+}
+
+function isElementTypeFn(type: ElementTypeFn | string | IRevueConstructor): type is ElementTypeFn {
+  return isFunction(type) && !(type as IRevueConstructor).isConstructor;
+}
+
+function isElement(node: IElement | IElement[] | Serializable): node is IElement {
+  return typeof node === 'object' && node && (node as any).type && (node as any).props;
 }
