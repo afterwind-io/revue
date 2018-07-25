@@ -9,11 +9,11 @@ function createDomElement(fiber: IFiber): IFiberReferencedElement {
   let el: IFiberReferencedElement;
 
   if (fiber.type === ElementType.TEXT) {
-    el = document.createTextNode(fiber.prop.textContent) as IFiberReferencedElement;
+    el = document.createTextNode(fiber.props.textContent) as IFiberReferencedElement;
   } else {
     el = document.createElement(fiber.type as string) as IFiberReferencedElement;
 
-    updateDomAttributes(el as HTMLElement, fiber.prop);
+    updateDomAttributes(el as HTMLElement, fiber.props);
   }
 
   return el;
@@ -21,7 +21,7 @@ function createDomElement(fiber: IFiber): IFiberReferencedElement {
 
 function updateDomAttributes(el: HTMLElement, attrs: IDictionary): HTMLElement {
   Object.entries(attrs).forEach(([key, value]) =>
-    setAttribute(el as HTMLElement, key, value)
+    setAttribute(el as HTMLElement, key, value),
   );
   return el;
 }
@@ -70,7 +70,6 @@ function setEventListener(el: HTMLElement, events: IDictionary<EventListenerOrEv
   Object.entries(events).forEach(([name, handler]) => {
     const attr = 'on' + name;
     if (attr in el) {
-      // @ts-ignore
       el['on' + name] = handler;
     }
   });
@@ -78,7 +77,6 @@ function setEventListener(el: HTMLElement, events: IDictionary<EventListenerOrEv
 
 function setDomAttributes(el: HTMLElement, attrs: IDictionary) {
   Object.entries(attrs).forEach(([key, value]) => {
-    // @ts-ignore
     // tslint:disable-next-line: triple-equals
     if (el[key] != value) el[key] = value;
   });

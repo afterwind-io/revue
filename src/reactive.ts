@@ -6,7 +6,7 @@ import {
   IElementMediator,
   IDataMediator,
 } from './type';
-import globals from './global';
+import Globals from './global';
 
 function isElementMediator(mediator: IDataMediator | IElementMediator): mediator is IElementMediator {
   return mediator.type === MediatorType.Element;
@@ -79,7 +79,7 @@ export function observe(obj: any, key: string) {
 
   Object.defineProperty(obj, key, {
     get() {
-      const mediator = globals.targetMediator;
+      const mediator = Globals.targetMediator;
       if (mediator) {
         mediator.dep = dep;
         dep.addDependency(mediator);

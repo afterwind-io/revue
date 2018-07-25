@@ -1,4 +1,4 @@
-import globals from './global';
+import Globals from './global';
 import {
   Serializable,
   IProp,
@@ -38,7 +38,7 @@ export function createElement(
   ...children: ElementChild[]
 ): IElement {
   const element: IElement = createEmptyElement(type, propfn, children);
-  const mediator = globals.targetMediator = element.mediator;
+  const mediator = Globals.targetMediator = element.mediator;
 
   if (isElementTypeFn(type)) {
     mediator.effectTag = MediatorEffectTag.Type;
@@ -62,7 +62,7 @@ export function createElement(
 function createChildElements(children: ElementChild[]): IElement[] {
   return children.reduce<IElement[]>((arr, child) => {
     const childElement: IElement = createTextElement('');
-    globals.targetMediator = childElement.mediator;
+    Globals.targetMediator = childElement.mediator;
     childElement.mediator.effectTag = MediatorEffectTag.Child;
 
     let node: IElement | IElement[] | Serializable;

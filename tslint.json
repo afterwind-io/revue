@@ -28,6 +28,12 @@
         "esSpecCompliant": true
       }
     ],
-    "no-bitwise": false
+    "no-bitwise": false,
+    "space-before-function-paren": [
+      true,
+      {
+        "anonymous": "always"
+      }
+    ]
   }
 }

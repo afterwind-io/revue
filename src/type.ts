@@ -28,7 +28,7 @@ export const enum MediatorType {
 
 /**
  * 中介者相应类型标记
- * 
+ *
  * 当数据变化导致fiber树变动时，需要该标记来指示
  * 受到影响的类型，以执行更优的render策略
  *
@@ -111,10 +111,10 @@ export interface IElementMediator extends IMediator {
   /**
    * 所属fiber的id
    *
-   * @type {string}
+   * @type {number}
    * @memberof IMediator
    */
-  from?: string;
+  from?: number;
 
   /**
    * 用于建立element树的元数据
@@ -176,9 +176,10 @@ export const enum FiberEffectTag {
 }
 
 export interface IFiber {
+  id: number;
   tag: FiberTag;
   type: string | ElementType | IRevueConstructor;
-  prop: IProp;
+  props: IProp;
 
   parent: IFiber | null;
   sibling: IFiber | null;
@@ -188,7 +189,7 @@ export interface IFiber {
 
   alternate: IFiber | null;
 
-  partialState: IDictionary | null;
+  mediator: IElementMediator | null;
 
   effectTag: FiberEffectTag;
   effects: IFiber[];
@@ -205,7 +206,7 @@ export interface IFiber {
  * @extends {Node}
  */
 export interface IFiberReferencedElement extends Node {
-  _rootFiber_?: IFiber;
+  $rootFiber?: IFiber;
 }
 
 export interface IRevueConstructor {
@@ -215,8 +216,8 @@ export interface IRevueConstructor {
 
 export interface IRevue<P = any> {
   props: P;
-  fiber: IFiber;
-  _rootFiber_: IFiber;
+  $fiber: IFiber;
+  $rootFiber: IFiber;
 
   destoryed(): void;
 

@@ -1,4 +1,4 @@
-import { IMediator } from './type';
+import { IMediator, IDataMediator, IElementMediator } from './type';
 
 // const _isRendering: boolean = false;
 
@@ -7,11 +7,15 @@ import { IMediator } from './type';
 // }
 
 interface IGlobals {
-  targetMediator: IMediator | null;
+  targetMediator: IDataMediator | IElementMediator | null;
+  getUid: () => number;
 }
 
-const globals: IGlobals = {
+let uid: number = 0;
+
+const Globals: IGlobals = {
   targetMediator: null,
+  getUid: (): number => ++uid,
 };
 
-export default globals;
+export default Globals;

@@ -6,10 +6,10 @@ import {
   MediatorType,
   IDataMediator,
 } from './type';
-import globals from './global';
+import Globals from './global';
 import { observe } from './reactive';
 import { Fiber } from './fiber';
-import { scheduleWork } from './scheduler';
+// import { scheduleWork } from './scheduler';
 import { noop } from './util';
 
 export function mount(el: string | HTMLElement, ...children: IElement[]) {
@@ -22,21 +22,22 @@ export function mount(el: string | HTMLElement, ...children: IElement[]) {
 
   if (!el) throw new Error();
 
-  scheduleWork({
-    from: FiberTag.HOST_ROOT,
-    hostDom,
-    newProp: {
-      children,
-    },
-  });
+  // TODO
+  // scheduleWork({
+  //   from: FiberTag.HOST_ROOT,
+  //   hostDom,
+  //   newProp: {
+  //     children,
+  //   },
+  // });
 }
 
 export class Revue<P = any> implements IRevue<P> {
   public static isConstructor: boolean = true;
 
   public props: P;
-  public fiber: IFiber = new Fiber();
-  public _rootFiber_: IFiber = new Fiber();
+  public $fiber: IFiber = new Fiber();
+  public $rootFiber: IFiber = new Fiber();
 
   /**
    * 需要做响应式处理的字段名称数组
@@ -90,13 +91,11 @@ export class Revue<P = any> implements IRevue<P> {
     const props = this.$props || [];
     props.forEach(key => {
       // TODO: 将mediator缓存至$props以便在实例销毁时清除依赖
-      const mediator: IDataMediator = globals.targetMediator = {
+      const mediator: IDataMediator = Globals.targetMediator = {
         type: MediatorType.Data,
-        // @ts-ignore
-        update: value => this[key] = value,
+        update: (value: any) => this[key] = value,
       };
 
-      // @ts-ignore
       this[key] = this.props[key]();
       observe(this, key);
     });

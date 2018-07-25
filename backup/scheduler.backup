@@ -62,9 +62,9 @@ function resetNextWorkUnit(): IFiber | null {
   const workUnit = workQueue.shift();
   if (!workUnit) return null;
 
-  if (workUnit.partialState && workUnit.instance) {
-    workUnit.instance.fiber.partialState = workUnit.partialState;
-  }
+  // if (workUnit.partialState && workUnit.instance) {
+  //   workUnit.instance.fiber.partialState = workUnit.partialState;
+  // }
 
   const root =
     workUnit.from === FiberTag.HOST_ROOT
@@ -75,7 +75,7 @@ function resetNextWorkUnit(): IFiber | null {
   return new Fiber({
     tag: FiberTag.HOST_ROOT,
     // @ts-ignore
-    prop: workUnit.newProp || root.prop,
+    props: workUnit.newProp || root.props,
     // @ts-ignore
     stateNode: workUnit.hostDom || root.stateNode,
     alternate: root,
@@ -134,7 +134,7 @@ function updateHostComponent(workUnit: IFiber) {
     workUnit.stateNode = createDomElement(workUnit);
   }
 
-  const children = workUnit.prop.children;
+  const children = workUnit.props.children;
   if (children) {
     reconcileChildrenArray(workUnit, children);
   }
@@ -144,14 +144,15 @@ function updateClassComponent(workUnit: IFiber) {
   let instance = workUnit.stateNode as IRevue;
   if (instance == null) {
     instance = workUnit.stateNode = createInstance(workUnit);
-  } else if (workUnit.prop === instance.props && !workUnit.partialState) {
-    return cloneChildFibers(workUnit);
   }
+  // else if (workUnit.props === instance.props && !workUnit.partialState) {
+  //   return cloneChildFibers(workUnit);
+  // }
 
-  instance.props = workUnit.prop;
+  instance.props = workUnit.props;
   // TODO: ???
   // instance.state = Object.assign({}, instance.state, workUnit.partialState);
-  workUnit.partialState = null;
+  // workUnit.partialState = null;
 
   const newChildElements: IElement[] = ([] as IElement[]).concat(instance.render());
   reconcileChildrenArray(workUnit, newChildElements);
@@ -159,7 +160,7 @@ function updateClassComponent(workUnit: IFiber) {
 
 function createInstance(fiber: IFiber) {
   const constructor = fiber.type as IRevueConstructor;
-  const instance = new constructor(fiber.prop);
+  const instance = new constructor(fiber.props);
   instance.fiber = fiber;
   return instance;
 }
@@ -174,7 +175,7 @@ function cloneChildFibers(parent: IFiber) {
     const newChild = new Fiber({
       tag: oldChild.tag,
       type: oldChild.type,
-      prop: oldChild.prop,
+      props: oldChild.props,
       stateNode: oldChild.stateNode,
       alternate: oldChild,
       // partialState: oldFiber.partialState,
@@ -205,11 +206,11 @@ function reconcileChildrenArray(wipFiber: IFiber, children: IElement[]) {
       newFiber = new Fiber({
         type: oldFiber.type,
         tag: oldFiber.tag,
-        prop: element.props,
+        props: element.props,
         parent: wipFiber,
         stateNode: oldFiber.stateNode,
         alternate: oldFiber,
-        partialState: oldFiber.partialState,
+        // partialState: oldFiber.partialState,
         effectTag: FiberEffectTag.UPDATE,
       });
     }
@@ -225,7 +226,7 @@ function reconcileChildrenArray(wipFiber: IFiber, children: IElement[]) {
           ? FiberTag.HOST_COMPONENT
           : FiberTag.CLASS_COMPONENT,
         type: element.type,
-        prop: element.props,
+        props: element.props,
         parent: wipFiber,
         effectTag: FiberEffectTag.PLACEMENT,
       });
@@ -293,7 +294,7 @@ function commitWork(fiber: IFiber) {
     domParent.appendChild(fiber.stateNode as Node);
   } else if (fiber.effectTag === FiberEffectTag.UPDATE) {
     // updateDomProperties(fiber.stateNode, fiber.alternate.props, fiber.props);
-    updateDomAttributes(fiber.stateNode as HTMLElement, fiber.prop);
+    updateDomAttributes(fiber.stateNode as HTMLElement, fiber.props);
   } else if (fiber.effectTag === FiberEffectTag.DELETION) {
     commitDeletion(fiber, domParent);
   }
