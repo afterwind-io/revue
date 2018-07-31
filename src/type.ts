@@ -63,17 +63,21 @@ export interface IMediator {
   /**
    * 所属响应式数据的依赖收集对象
    *
-   * @type {IDependency}
+   * @type {IDependency[]}
    * @memberof IMediator
    */
-  dep?: IDependency;
+  deps?: IDependency[];
 
   /**
    * 通知依赖者更新的入口
    *
    * @memberof IMediator
    */
-  notify?: () => void;
+  update?: () => void;
+
+  destory?: () => void;
+
+  onDestoryed?: () => void;
 }
 
 /**
@@ -89,7 +93,7 @@ export interface IDataMediator extends IMediator {
    *
    * @memberof IDataMediator
    */
-  update?: (value: any) => void;
+  onUpdated?: (value: any) => void;
 }
 
 /**
@@ -129,10 +133,11 @@ export interface IElementMediator extends IMediator {
    *
    * @memberof IMediator
    */
-  update?: (type: MediatorEffectTag) => void;
+  onUpdated?: (type: MediatorEffectTag) => void;
 }
 
 export interface IElement {
+  virtual: boolean;
   type: string | ElementType | IRevueConstructor;
   props: IProp;
   mediator: IElementMediator;
@@ -159,20 +164,23 @@ export type ElementChildFn = () => IElement | IElement[] | Serializable;
 export interface IDependency {
   value: any;
   addDependency(dep: IDataMediator | IElementMediator): void;
+  includes(mediator: IMediator): boolean;
   invoke(): void;
 }
 
 export const enum FiberTag {
   HOST_ROOT,
+  VIRTUAL,
   HOST_COMPONENT,
   CLASS_COMPONENT,
 }
 
 export const enum FiberEffectTag {
   NONE,
-  PLACEMENT,
+  CREATE,
   DELETION,
   UPDATE,
+  REPLACE,
 }
 
 export interface IFiber {
@@ -186,8 +194,6 @@ export interface IFiber {
   child: IFiber | null;
 
   stateNode: IRevue | IFiberReferencedElement | null;
-
-  alternate: IFiber | null;
 
   mediator: IElementMediator | null;
 

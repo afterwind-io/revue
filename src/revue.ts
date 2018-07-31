@@ -9,7 +9,7 @@ import {
 import Globals from './global';
 import { observe } from './reactive';
 import { Fiber } from './fiber';
-// import { scheduleWork } from './scheduler';
+import { scheduleWork } from './scheduler';
 import { noop } from './util';
 
 export function mount(el: string | HTMLElement, ...children: IElement[]) {
@@ -23,13 +23,11 @@ export function mount(el: string | HTMLElement, ...children: IElement[]) {
   if (!el) throw new Error();
 
   // TODO
-  // scheduleWork({
-  //   from: FiberTag.HOST_ROOT,
-  //   hostDom,
-  //   newProp: {
-  //     children,
-  //   },
-  // });
+  scheduleWork({
+    tag: FiberTag.HOST_ROOT,
+    hostDom,
+    childElements: children,
+  });
 }
 
 export class Revue<P = any> implements IRevue<P> {
@@ -93,7 +91,7 @@ export class Revue<P = any> implements IRevue<P> {
       // TODO: 将mediator缓存至$props以便在实例销毁时清除依赖
       const mediator: IDataMediator = Globals.targetMediator = {
         type: MediatorType.Data,
-        update: (value: any) => this[key] = value,
+        onUpdated: (value: any) => this[key] = value,
       };
 
       this[key] = this.props[key]();

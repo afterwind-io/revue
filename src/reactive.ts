@@ -28,9 +28,13 @@ class Dependency implements IDependency {
     // TODO: 可能会把首次添加的mediator删除
   }
 
+  public includes(mediator: IMediator): boolean {
+    return this.deps.includes(mediator);
+  }
+
   public invoke() {
     this.deps.forEach(mediator => {
-      if (mediator.notify) mediator.notify();
+      if (mediator.update) mediator.update();
     });
   }
 
@@ -41,9 +45,9 @@ class Dependency implements IDependency {
       // 如果同个element的多个属性（如type和props）
       // 同时依赖于同一个数据，则需要调用notify从闭包中读取
       // 之前写入的effectTag，将其与当前effectTag合并写入新闭包
-      mediator.update = (tag: MediatorEffectTag) => lastEffectTag = tag;
-      (mediator.notify as () => void)();
-      delete mediator.update;
+      mediator.onUpdated = (tag: MediatorEffectTag) => lastEffectTag = tag;
+      (mediator.update as () => void)();
+      delete mediator.onUpdated;
     } else {
       this.deps.push(mediator);
     }
@@ -51,8 +55,8 @@ class Dependency implements IDependency {
     // 使用闭包保存effectTag，因为mediator.effectTag是
     // 当前element的临时缓存值，在后续操作中可能发生变动
     const effectTag = mediator.effectTag | lastEffectTag;
-    mediator.notify = function () {
-      if (this.update) this.update(effectTag);
+    mediator.update = function () {
+      if (this.onUpdated) this.onUpdated(effectTag);
     };
   }
 
@@ -60,8 +64,11 @@ class Dependency implements IDependency {
     if (this.deps.includes(mediator)) return;
 
     this.deps.push(mediator);
-    mediator.notify = function () {
-      if (this.update) this.update(this.dep!.value);
+
+    const value = this.value;
+    // TODO: data与mediator是n:n的关系，update不能是唯一的
+    mediator.update = function () {
+      if (this.onUpdated) this.onUpdated(value);
     };
   }
 }
@@ -81,7 +88,11 @@ export function observe(obj: any, key: string) {
     get() {
       const mediator = Globals.targetMediator;
       if (mediator) {
-        mediator.dep = dep;
+        if (!dep.includes(mediator)) {
+          if (!mediator.deps) mediator.deps = [];
+          mediator.deps.push(dep);
+        }
+
         dep.addDependency(mediator);
         console.log('[dep]', key, mediator, dep);
       }

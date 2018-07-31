@@ -5,7 +5,7 @@ import {
   IDictionary,
 } from './type';
 
-function createDomElement(fiber: IFiber): IFiberReferencedElement {
+export function createDomElement(fiber: IFiber): IFiberReferencedElement {
   let el: IFiberReferencedElement;
 
   if (fiber.type === ElementType.TEXT) {
@@ -19,10 +19,12 @@ function createDomElement(fiber: IFiber): IFiberReferencedElement {
   return el;
 }
 
-function updateDomAttributes(el: HTMLElement, attrs: IDictionary): HTMLElement {
-  Object.entries(attrs).forEach(([key, value]) =>
-    setAttribute(el as HTMLElement, key, value),
-  );
+export function updateDomAttributes(el: HTMLElement, attrs: IDictionary): HTMLElement {
+  Object.entries(attrs).forEach(([key, value]) => {
+    if (key === 'children') return;
+
+    setAttribute(el as HTMLElement, key, value)
+  });
   return el;
 }
 
@@ -34,10 +36,8 @@ function setAttribute(el: HTMLElement, key: string, value: any) {
       return setStyle(el, value);
     case 'on':
       return setEventListener(el, value);
-    case 'domAttr':
-      return setDomAttributes(el, value);
     default:
-      break;
+      return setDomAttributes(el, key, value);
   }
 }
 
@@ -75,14 +75,11 @@ function setEventListener(el: HTMLElement, events: IDictionary<EventListenerOrEv
   });
 }
 
-function setDomAttributes(el: HTMLElement, attrs: IDictionary) {
-  Object.entries(attrs).forEach(([key, value]) => {
-    // tslint:disable-next-line: triple-equals
-    if (el[key] != value) el[key] = value;
-  });
+function setDomAttributes(el: HTMLElement, key: string, value: any) {
+  // tslint:disable-next-line: triple-equals
+  if (el[key] != value) el[key] = value;
 }
 
-export {
-  createDomElement,
-  updateDomAttributes,
-};
+export function appendChildren(el: Node, children: NodeList) {
+  children.forEach(child => el.appendChild(child));
+}

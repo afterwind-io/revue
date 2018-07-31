@@ -2,6 +2,7 @@ import {
   IElement,
   ElementChild,
   ElementPropFn,
+  ElementType,
 } from './type';
 import { createElement as h } from './element';
 
@@ -9,6 +10,10 @@ function el(type: string) {
   return (propfn: ElementPropFn | null, ...children: ElementChild[]): IElement => {
     return h(type, propfn, ...children);
   };
+}
+
+export function text(contentFn: () => any) {
+  return h(ElementType.TEXT, () => ({ textContent: contentFn() }));
 }
 
 export const button = el('button');

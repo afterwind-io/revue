@@ -19,10 +19,8 @@ export default class Todo extends Revue {
     return p(null,
       input(
         () => ({
-          domAttr: {
-            type: 'checkbox',
-            checked: this.data.isImportant,
-          },
+          type: 'checkbox',
+          checked: this.data.isImportant,
           on: {
             change: (e: Event) => this.onImportanceChanged(e),
           },

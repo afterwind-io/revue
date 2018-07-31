@@ -18,6 +18,7 @@ import {
   pureObject,
   isFunction,
   toPlainString,
+  isElementTypeFn,
 } from './util';
 
 /**
@@ -56,32 +57,33 @@ export function createElement(
     element.props.children = createChildElements(children);
   }
 
+  mediator.effectTag = MediatorEffectTag.Unknown;
+  Globals.targetMediator = null;
   return element;
 }
 
-function createChildElements(children: ElementChild[]): IElement[] {
+export function createChildElements(children: ElementChild[]): IElement[] {
   return children.reduce<IElement[]>((arr, child) => {
-    const childElement: IElement = createTextElement('');
-    Globals.targetMediator = childElement.mediator;
-    childElement.mediator.effectTag = MediatorEffectTag.Child;
-
     let node: IElement | IElement[] | Serializable;
     if (isFunction(child)) {
       node = (child as ElementChildFn)();
+      return arr.concat(createVirtualElement(child));
     } else {
       node = child;
     }
 
-    if (Array.isArray(node)) {
-      return arr.concat(createChildElements(node as IElement[]));
-    } else if (isElement(node)) {
-      return arr.concat(node as IElement);
-    } else {
-      childElement.props.textContent = toPlainString(node);
-    }
-
-    return arr.concat(childElement);
+    return arr.concat(createChildElement(node));
   }, []);
+}
+
+function createChildElement(child: IElement | IElement[] | Serializable): IElement | IElement[] {
+  if (Array.isArray(child)) {
+    return createChildElements(child as IElement[]);
+  } else if (isElement(child)) {
+    return child as IElement;
+  } else {
+    return createTextElement(toPlainString(child));
+  }
 }
 
 function createEmptyElement(
@@ -90,33 +92,52 @@ function createEmptyElement(
   children: ElementChild[],
 ): IElement {
   return pureObject<IElement>({
+    virtual: false,
     type: ElementType.UNKNOWN,
     props: {},
     mediator: createMediator({ type, propfn, children }),
   });
 }
 
-function createTextElement(content: any) {
+function createVirtualElement(childFn: ElementChildFn): IElement {
+  const mediator = Globals.targetMediator = createMediator();
+  mediator.effectTag = MediatorEffectTag.Child;
+  mediator.meta.children = [childFn];
+
+  const children = ([] as IElement[]).concat(createChildElement(childFn()));
+
+  return pureObject<IElement>({
+    virtual: true,
+    type: ElementType.UNKNOWN,
+    props: { children },
+    mediator,
+  });
+}
+
+function createTextElement(content: any): IElement {
   const type = ElementType.TEXT;
   const props: IProp = { textContent: content };
 
   return pureObject<IElement>({
+    virtual: false,
     type,
     props,
-    mediator: createMediator({ type, propfn: () => props, children: [] }),
+    mediator: createMediator(),
   });
 }
 
-function createMediator(meta: IElementMeta): IElementMediator {
+function createMediator(meta?: IElementMeta): IElementMediator {
+  const m: IElementMeta = meta || {
+    type: ElementType.UNKNOWN,
+    propfn: null,
+    children: [],
+  };
+
   return pureObject<IElementMediator>({
     type: MediatorType.Element,
     effectTag: MediatorEffectTag.Unknown,
-    meta,
+    meta: pureObject(m),
   });
-}
-
-function isElementTypeFn(type: ElementTypeFn | string | IRevueConstructor): type is ElementTypeFn {
-  return isFunction(type) && !(type as IRevueConstructor).isConstructor;
 }
 
 function isElement(node: IElement | IElement[] | Serializable): node is IElement {

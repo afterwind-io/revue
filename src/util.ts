@@ -1,4 +1,9 @@
-import { IDictionary, Serializable } from './type';
+import {
+  IDictionary,
+  Serializable,
+  ElementTypeFn,
+  IRevueConstructor,
+} from './type';
 
 // tslint:disable-next-line:no-empty
 export function noop() { }
@@ -7,8 +12,12 @@ export function pureObject<T extends object = IDictionary>(source?: T): T {
   return Object.assign(Object.create(null), source);
 }
 
-export function isFunction(o: any): boolean {
+export function isFunction(o: any): o is (...args: any[]) => any {
   return !!o && ({}).toString.call(o) === '[object Function]';
+}
+
+export function isElementTypeFn(type: ElementTypeFn | string | IRevueConstructor): type is ElementTypeFn {
+  return isFunction(type) && !(type as any).isConstructor;
 }
 
 export function toPlainString(content: Serializable) {

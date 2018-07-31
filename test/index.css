@@ -1,0 +1,15 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  display: flex;
+}
+
+#app {
+  flex: 1 0 50%;
+  padding: 8px;
+}

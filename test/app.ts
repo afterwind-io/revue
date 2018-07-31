@@ -8,6 +8,7 @@ import {
   input,
   div,
   button,
+  text,
 } from '../src/element.util';
 
 import { ITodo } from './test.type';
@@ -46,7 +47,9 @@ export default class App extends Revue {
 
   private remove(index: number) {
     // this.todos.splice(index, 1);
-    this.todos = [...this.todos.splice(index, 1)];
+    const copy = [...this.todos]
+    copy.splice(index, 1);
+    this.todos = [...copy];
   }
 
   private onNameChanged(e: KeyboardEvent) {
@@ -67,13 +70,11 @@ export default class App extends Revue {
 
   private renderHeader() {
     return () => [
-      h(() => this.isHappy ? 'h1' : 'h3', null, () => this.title),
+      h(() => this.isHappy ? 'h1' : 'h3', null, text(() => this.title)),
       p(null,
         'Your name: ',
         input(() => ({
-          domAttr: {
-            value: this.name,
-          },
+          value: this.name,
           on: {
             input: (e: KeyboardEvent) => this.onNameChanged(e),
           },
@@ -81,16 +82,25 @@ export default class App extends Revue {
       ),
       p(null,
         input(() => ({
-          domAttr: {
-            type: 'checkbox',
-            checked: this.isHappy,
-          },
+          type: 'checkbox',
+          checked: this.isHappy,
           on: {
             input: (e: KeyboardEvent) => this.onHappyChanged(e),
           },
         })),
         'I feel happy now.',
       ),
+      () => this.todos.map((t, index) => p(null,
+        text(() => t.work),
+        button(
+          () => ({
+            on: {
+              click: () => this.remove(index),
+            },
+          }),
+          'remove',
+        ),
+      )),
     ];
   }
 
@@ -136,7 +146,7 @@ export default class App extends Revue {
   public render() {
     const e = div(null,
       this.renderHeader(),
-      this.renderTodos(),
+      // this.renderTodos(),
     );
     console.log(e);
     return e;
