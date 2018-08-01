@@ -74,7 +74,7 @@ function createNewRootFiber(workUnit: IWorkUnit): IFiber {
 }
 
 function performWorkUnit(workUnit: IFiber): IFiber | null {
-  console.log('update:', workUnit.id);
+  console.log('[Scheduler] Updating Fiber:', workUnit.id);
   beginWork(workUnit);
 
   // TODO: 如何避免冗余遍历子树？
@@ -250,7 +250,6 @@ function commitAllWork() {
   /**
    * TODO: Test Only -----------------------------
    */
-  console.log(targetWorkUnit);
   function getRoot(fiber: IFiber) {
     let f = fiber;
     while (f) {

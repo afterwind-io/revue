@@ -23,7 +23,7 @@ export function updateDomAttributes(el: HTMLElement, attrs: IDictionary): HTMLEl
   Object.entries(attrs).forEach(([key, value]) => {
     if (key === 'children') return;
 
-    setAttribute(el as HTMLElement, key, value)
+    setAttribute(el as HTMLElement, key, value);
   });
   return el;
 }

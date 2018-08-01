@@ -134,8 +134,10 @@ function createMediator(meta?: IElementMeta): IElementMediator {
   };
 
   return pureObject<IElementMediator>({
+    id: Globals.getUid(),
     type: MediatorType.Element,
     effectTag: MediatorEffectTag.Unknown,
+    relations: {},
     meta: pureObject(m),
   });
 }

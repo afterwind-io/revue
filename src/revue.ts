@@ -4,7 +4,7 @@ import {
   IElement,
   FiberTag,
   MediatorType,
-  IDataMediator,
+  IMediator,
 } from './type';
 import Globals from './global';
 import { observe } from './reactive';
@@ -89,9 +89,11 @@ export class Revue<P = any> implements IRevue<P> {
     const props = this.$props || [];
     props.forEach(key => {
       // TODO: 将mediator缓存至$props以便在实例销毁时清除依赖
-      const mediator: IDataMediator = Globals.targetMediator = {
+      const mediator: IMediator = Globals.targetMediator = {
+        id: Globals.getUid(),
         type: MediatorType.Data,
-        onUpdated: (value: any) => this[key] = value,
+        relations: {},
+        update: (depId: number, value: any) => this[key] = value,
       };
 
       this[key] = this.props[key]();

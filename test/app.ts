@@ -69,7 +69,7 @@ export default class App extends Revue {
   }
 
   private renderHeader() {
-    return () => [
+    return [
       h(() => this.isHappy ? 'h1' : 'h3', null, text(() => this.title)),
       p(null,
         'Your name: ',
@@ -144,11 +144,9 @@ export default class App extends Revue {
   }
 
   public render() {
-    const e = div(null,
+    return div(null,
       this.renderHeader(),
       // this.renderTodos(),
     );
-    console.log(e);
-    return e;
   }
 }

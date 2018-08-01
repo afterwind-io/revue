@@ -13,9 +13,8 @@ import {
   ElementChild,
 } from './type';
 import { scheduleWork } from './scheduler';
-import Globals from './global';
 import { isElementTypeFn } from './util';
-import { createElement, createChildElements } from './element';
+import { createChildElements } from './element';
 
 interface IFiberOptions extends Partial<IFiber> { }
 
@@ -33,7 +32,7 @@ class Fiber implements IFiber {
   public effects: IFiber[];
 
   constructor(options: IFiberOptions = {}) {
-    this.id = options.id || Globals.getUid();
+    this.id = options.id || 0;
     this.tag = options.tag || FiberTag.HOST_ROOT;
     this.type = options.type || '';
     this.props = options.props || {};
@@ -57,19 +56,20 @@ class Fiber implements IFiber {
 
   private linkMediator(mediator: IElementMediator) {
     this.mediator = mediator;
-    mediator.from = this.id;
-    mediator.onUpdated = (effectTag: MediatorEffectTag) => {
-      this.mediator!.effectTag = effectTag;
+    this.id = mediator.id;
+
+    mediator.update = (depId: number, effectTag: MediatorEffectTag) => {
+      mediator.effectTag = effectTag;
 
       if (effectTag & MediatorEffectTag.Type) {
-        const type = this.mediator!.meta.type;
+        const type = mediator.meta.type;
         if (isElementTypeFn(type)) {
           this.type = type();
         }
       }
 
       if (effectTag & MediatorEffectTag.Prop) {
-        const propFn = this.mediator!.meta.propfn;
+        const propFn = mediator.meta.propfn;
         if (propFn) {
           this.props = propFn();
         }
@@ -77,7 +77,7 @@ class Fiber implements IFiber {
 
       if (effectTag & MediatorEffectTag.Child) {
         // 只有virtual类型的fiber才会触发此条件
-        const [childFn] = this.mediator!.meta.children as ElementChildFn[];
+        const [childFn] = mediator.meta.children as ElementChildFn[];
         this.props.children = createChildElements(
           ([] as ElementChild[]).concat(childFn()),
         );

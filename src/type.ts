@@ -2,6 +2,10 @@ export interface IDictionary<T = any> {
   [key: string]: T;
 }
 
+export interface INumericDictionary<T> {
+  [key: number]: T;
+}
+
 export type Serializable = object | string | number | boolean | null | undefined;
 
 export interface IProp extends IDictionary<any> {
@@ -53,6 +57,14 @@ export const enum MediatorEffectTag {
  */
 export interface IMediator {
   /**
+   * 唯一标识id
+   *
+   * @type {number}
+   * @memberof IMediator
+   */
+  id: number;
+
+  /**
    * 中介者类型
    *
    * @type {MediatorType}
@@ -61,39 +73,21 @@ export interface IMediator {
   type: MediatorType;
 
   /**
-   * 所属响应式数据的依赖收集对象
+   * 描述数据对依赖者产生的影响
    *
-   * @type {IDependency[]}
+   * *可能在将来移除
+   *
+   * @type {(INumericDictionary<MediatorEffectTag | any>)}
    * @memberof IMediator
    */
-  deps?: IDependency[];
+  relations: INumericDictionary<MediatorEffectTag | any>;
 
   /**
    * 通知依赖者更新的入口
    *
    * @memberof IMediator
    */
-  update?: () => void;
-
-  destory?: () => void;
-
-  onDestoryed?: () => void;
-}
-
-/**
- * 用于连接数据之间的中介对象
- *
- * @export
- * @interface IDataMediator
- * @extends {IMediator}
- */
-export interface IDataMediator extends IMediator {
-  /**
-   * 依赖数据的响应方法
-   *
-   * @memberof IDataMediator
-   */
-  onUpdated?: (value: any) => void;
+  update?: (depId: number, ...payload: any[]) => void;
 }
 
 /**
@@ -113,27 +107,12 @@ export interface IElementMediator extends IMediator {
   effectTag: MediatorEffectTag;
 
   /**
-   * 所属fiber的id
-   *
-   * @type {number}
-   * @memberof IMediator
-   */
-  from?: number;
-
-  /**
    * 用于建立element树的元数据
    *
    * @type {IElementMeta}
    * @memberof IMediator
    */
   meta: IElementMeta;
-
-  /**
-   * fiber更新的响应方法
-   *
-   * @memberof IMediator
-   */
-  onUpdated?: (type: MediatorEffectTag) => void;
 }
 
 export interface IElement {
@@ -162,9 +141,10 @@ export type ElementPropFn = () => IProp;
 export type ElementChildFn = () => IElement | IElement[] | Serializable;
 
 export interface IDependency {
+  id: number;
   value: any;
-  addDependency(dep: IDataMediator | IElementMediator): void;
-  includes(mediator: IMediator): boolean;
+  addDependency(mediator: IMediator): void;
+  removeDependency(mediatorKey: number): void;
   invoke(): void;
 }
 

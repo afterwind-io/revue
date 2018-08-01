@@ -28,6 +28,18 @@ export function toPlainString(content: Serializable) {
   }
 }
 
+/**
+ * 查找并替换数组中的指定元素
+ *
+ * 注：该方法会更改传入的数组本身
+ *
+ * @export
+ * @template T 数组元素类型
+ * @param {T[]} arr 需要操作的数组
+ * @param {T} source 用于替换的元素
+ * @param {(el: T) => boolean} predicate 查找指定元素的断言
+ * @returns {(T | undefined)} 被替换的元素，如果未找到指定元素，返回undefined
+ */
 export function findNreplace<T>(arr: T[], source: T, predicate: (el: T) => boolean): T | undefined {
   const index = arr.findIndex(predicate);
   if (index === -1) {
@@ -37,4 +49,19 @@ export function findNreplace<T>(arr: T[], source: T, predicate: (el: T) => boole
     arr[index] = source;
     return target;
   }
+}
+
+/**
+ * 查找并删除数组中的指定元素
+ *
+ * 注：该方法会更改传入的数组本身
+ *
+ * @export
+ * @template T 数组元素类型
+ * @param {T[]} array 需要操作的数组
+ * @param {(value: T, index: number) => boolean} predicate 查找指定元素的断言
+ */
+export function findNdelete<T>(array: T[], predicate: (value: T, index: number) => boolean) {
+  const index = array.findIndex(predicate);
+  if (index !== -1) array.splice(index, 1);
 }
