@@ -75,18 +75,14 @@ export default class App extends Revue {
         'Your name: ',
         input(() => ({
           value: this.name,
-          on: {
-            input: (e: KeyboardEvent) => this.onNameChanged(e),
-          },
+          oninput: (e: KeyboardEvent) => this.onNameChanged(e),
         })),
       ),
       p(null,
         input(() => ({
           type: 'checkbox',
           checked: this.isHappy,
-          on: {
-            input: (e: KeyboardEvent) => this.onHappyChanged(e),
-          },
+          oninput: (e: KeyboardEvent) => this.onHappyChanged(e),
         })),
         'I feel happy now.',
       ),
@@ -94,9 +90,7 @@ export default class App extends Revue {
         text(() => t.work),
         button(
           () => ({
-            on: {
-              click: () => this.remove(index),
-            },
+            onclick: () => this.remove(index),
           }),
           'remove',
         ),
@@ -111,15 +105,11 @@ export default class App extends Revue {
         domAttr: {
           value: this.todoCache,
         },
-        on: {
-          input: (e: KeyboardEvent) => this.onTodoCacheChanged(e),
-        },
+        oninput: (e: KeyboardEvent) => this.onTodoCacheChanged(e)
       })),
       button(
         () => ({
-          on: {
-            click: () => this.add(),
-          },
+          onclick: () => this.add(),
         }),
         'Add',
       ),
@@ -127,9 +117,7 @@ export default class App extends Revue {
         p(null,
           button(
             () => ({
-              on: {
-                click: () => this.remove(index),
-              },
+              onclick: () => this.remove(index)
             }),
             'Remove',
           ),

@@ -1,6 +1,6 @@
 import { Revue } from '../src/revue';
 import { Prop, Emit } from '../src/decorators';
-import { p, input } from '../src/element.util';
+import { p, input, text } from '../src/element.util';
 
 import { ITodo } from './test.type';
 
@@ -17,16 +17,12 @@ export default class Todo extends Revue {
 
   public render() {
     return p(null,
-      input(
-        () => ({
-          type: 'checkbox',
-          checked: this.data.isImportant,
-          on: {
-            change: (e: Event) => this.onImportanceChanged(e),
-          },
-        }),
-      ),
-      () => this.data.work,
+      input(() => ({
+        type: 'checkbox',
+        checked: this.data.isImportant,
+        onchange: (e: Event) => this.onImportanceChanged(e)
+      })),
+      text(() => this.data.work),
     );
   }
 }

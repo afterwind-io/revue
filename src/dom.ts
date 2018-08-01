@@ -34,8 +34,8 @@ function setAttribute(el: HTMLElement, key: string, value: any) {
       return setClass(el, value);
     case 'style':
       return setStyle(el, value);
-    case 'on':
-      return setEventListener(el, value);
+    case 'on' + key.slice(2):
+      return setEventListener(el, key, value);
     default:
       return setDomAttributes(el, key, value);
   }
@@ -66,13 +66,10 @@ function setStyle(el: HTMLElement, value: IDictionary<string> | string) {
   if (style !== originStyle) el.setAttribute('style', style);
 }
 
-function setEventListener(el: HTMLElement, events: IDictionary<EventListenerOrEventListenerObject>) {
-  Object.entries(events).forEach(([name, handler]) => {
-    const attr = 'on' + name;
-    if (attr in el) {
-      el['on' + name] = handler;
-    }
-  });
+function setEventListener(el: HTMLElement, name: string, handler: EventListenerOrEventListenerObject) {
+  if (name in el) {
+    el[name] = handler;
+  }
 }
 
 function setDomAttributes(el: HTMLElement, key: string, value: any) {
