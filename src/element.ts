@@ -66,7 +66,6 @@ export function createChildElements(children: ElementChild[]): IElement[] {
   return children.reduce<IElement[]>((arr, child) => {
     let node: IElement | IElement[] | Serializable;
     if (isFunction(child)) {
-      node = (child as ElementChildFn)();
       return arr.concat(createVirtualElement(child));
     } else {
       node = child;
