@@ -11,6 +11,7 @@ import {
   IElementMediator,
   ElementChildFn,
   ElementChild,
+  IElement,
 } from './type';
 import { scheduleWork } from './scheduler';
 import { isElementTypeFn } from './util';
@@ -28,6 +29,7 @@ class Fiber implements IFiber {
   public child: IFiber | null;
   public stateNode: IRevue | IFiberReferencedElement | null;
   public mediator!: IElementMediator | null;
+  public element: IElement | null;
   public effectTag: FiberEffectTag;
   public effects: IFiber[];
 
@@ -40,6 +42,7 @@ class Fiber implements IFiber {
     this.sibling = options.sibling || null;
     this.child = options.child || null;
     this.stateNode = options.stateNode || null;
+    this.element = options.element || null;
     this.effectTag = options.effectTag || FiberEffectTag.NONE;
     this.effects = options.effects || [];
 
@@ -64,14 +67,14 @@ class Fiber implements IFiber {
       if (effectTag & MediatorEffectTag.Type) {
         const type = mediator.meta.type;
         if (isElementTypeFn(type)) {
-          this.type = type();
+          this.type = this.element!.type = type();
         }
       }
 
       if (effectTag & MediatorEffectTag.Prop) {
         const propFn = mediator.meta.propfn;
         if (propFn) {
-          this.props = propFn();
+          this.props = this.element!.props = propFn();
         }
       }
 

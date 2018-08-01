@@ -176,6 +176,7 @@ export interface IFiber {
   stateNode: IRevue | IFiberReferencedElement | null;
 
   mediator: IElementMediator | null;
+  element: IElement | null;
 
   effectTag: FiberEffectTag;
   effects: IFiber[];

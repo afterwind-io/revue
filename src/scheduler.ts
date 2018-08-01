@@ -119,10 +119,8 @@ function updateHostComponent(wipFiber: IFiber) {
       wipFiber.effectTag = FiberEffectTag.UPDATE;
     }
 
-    // TODO: 增加以下判断会导致virtual子节点无法更新
-    // if (!(effectTag & MediatorEffectTag.Child)) {
-    //   return;
-    // }
+    // 如果触发初始渲染的fiber为虚拟节点，则强制刷新所有子代
+    if (targetWorkUnit!.tag !== FiberTag.VIRTUAL) return;
   }
 
   const children = wipFiber.props.children;
@@ -194,6 +192,7 @@ function reconcileChildrenArray(wipFiber: IFiber, children: IElement[]) {
         props: element.props,
         parent: wipFiber,
         mediator: element.mediator,
+        element,
         effectTag: FiberEffectTag.CREATE,
       });
     }
