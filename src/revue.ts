@@ -93,11 +93,13 @@ export class Revue<P = any> implements IRevue<P> {
         id: getUid(),
         type: MediatorType.Data,
         relations: {},
-        update: (depId: number, value: any) => this[key] = value,
+        update: (depId: number, value: any) => this[key] = this.props[key](),
       };
 
       this[key] = this.props[key]();
       observe(this, key);
+
+      Shares.targetMediator = null;
     });
   }
 
