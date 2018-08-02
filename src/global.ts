@@ -6,16 +6,13 @@ import { IMediator } from './type';
 //   return _isRendering;
 // }
 
-interface IGlobals {
+let uid: number = 0;
+export const getUid = () => ++uid;
+
+interface IShares {
   targetMediator: IMediator | null;
-  getUid: () => number;
 }
 
-let uid: number = 0;
-
-const Globals: IGlobals = {
+export const Shares: IShares = {
   targetMediator: null,
-  getUid: (): number => ++uid,
 };
-
-export default Globals;

@@ -6,7 +6,7 @@ import {
   MediatorType,
   IMediator,
 } from './type';
-import Globals from './global';
+import { getUid, Shares } from './global';
 import { observe } from './reactive';
 import { Fiber } from './fiber';
 import { scheduleWork } from './scheduler';
@@ -89,8 +89,8 @@ export class Revue<P = any> implements IRevue<P> {
     const props = this.$props || [];
     props.forEach(key => {
       // TODO: 将mediator缓存至$props以便在实例销毁时清除依赖
-      const mediator: IMediator = Globals.targetMediator = {
-        id: Globals.getUid(),
+      const mediator: IMediator = Shares.targetMediator = {
+        id: getUid(),
         type: MediatorType.Data,
         relations: {},
         update: (depId: number, value: any) => this[key] = value,

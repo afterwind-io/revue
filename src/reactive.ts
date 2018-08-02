@@ -5,7 +5,7 @@ import {
   IMediator,
   IElementMediator,
 } from './type';
-import Globals from './global';
+import { getUid, Shares } from './global';
 import * as Channel from './channel';
 
 function isElementMediator(mediator: IMediator): mediator is IElementMediator {
@@ -13,7 +13,7 @@ function isElementMediator(mediator: IMediator): mediator is IElementMediator {
 }
 
 class Dependency implements IDependency {
-  public id: number = Globals.getUid();
+  public id: number = getUid();
   public value: any = null;
 
   constructor() {
@@ -74,7 +74,7 @@ export function observe(obj: any, key: string) {
 
   Object.defineProperty(obj, key, {
     get() {
-      const mediator = Globals.targetMediator;
+      const mediator = Shares.targetMediator;
       if (mediator) {
         dep.addDependency(mediator);
         console.log(`[Dependency] Key: "${key}", Id: "${dep.id}", Mediator: "${mediator.id}"`);

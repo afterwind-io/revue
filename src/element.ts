@@ -1,4 +1,4 @@
-import Globals from './global';
+import { getUid, Shares } from './global';
 import {
   Serializable,
   IProp,
@@ -39,7 +39,7 @@ export function createElement(
   ...children: ElementChild[]
 ): IElement {
   const element: IElement = createEmptyElement(type, propfn, children);
-  const mediator = Globals.targetMediator = element.mediator;
+  const mediator = Shares.targetMediator = element.mediator;
 
   if (isElementTypeFn(type)) {
     mediator.effectTag = MediatorEffectTag.Type;
@@ -58,7 +58,7 @@ export function createElement(
   }
 
   mediator.effectTag = MediatorEffectTag.Unknown;
-  Globals.targetMediator = null;
+  Shares.targetMediator = null;
   return element;
 }
 
@@ -99,7 +99,7 @@ function createEmptyElement(
 }
 
 function createVirtualElement(childFn: ElementChildFn): IElement {
-  const mediator = Globals.targetMediator = createMediator();
+  const mediator = Shares.targetMediator = createMediator();
   mediator.effectTag = MediatorEffectTag.Child;
   mediator.meta.children = [childFn];
 
@@ -133,7 +133,7 @@ function createMediator(meta?: IElementMeta): IElementMediator {
   };
 
   return pureObject<IElementMediator>({
-    id: Globals.getUid(),
+    id: getUid(),
     type: MediatorType.Element,
     effectTag: MediatorEffectTag.Unknown,
     relations: {},
