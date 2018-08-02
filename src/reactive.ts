@@ -8,6 +8,16 @@ import {
 import { getUid, Shares } from './global';
 import * as Channel from './channel';
 
+const ARRAY_INJECT_METHODS: string[] = [
+  'push',
+  'unshift',
+  'shift',
+  'pop',
+  'splice',
+  'sort',
+  'reverse',
+];
+
 function isElementMediator(mediator: IMediator): mediator is IElementMediator {
   return mediator.type === MediatorType.Element;
 }
@@ -61,16 +71,18 @@ class Dependency implements IDependency {
   }
 }
 
-export function makeReactive(obj: any) {
-  Object.keys(obj).forEach(key => observe(obj, key));
-}
-
 export function observe(obj: any, key: string) {
   const dep: IDependency = new Dependency();
   dep.value = obj[key];
 
   // TODO: 缓存用户设定的getter, setter
   // const originGetter = ...
+
+  // TODO: 如何判定某个对象已被观测过，以避免陷入循环引用？
+
+  if (dep.value !== undefined) {
+    makeReactive(dep.value, dep);
+  }
 
   Object.defineProperty(obj, key, {
     get() {
@@ -83,9 +95,57 @@ export function observe(obj: any, key: string) {
       return dep.value;
     },
     set(value: any) {
+      if (value !== dep.value) {
+        makeReactive(value, dep);
+      }
+
       dep.value = value;
       dep.invoke();
     },
     enumerable: false,
   });
+}
+
+function makeReactive(obj: any, dep: IDependency) {
+  if (Array.isArray(obj)) {
+    injectArrayMethods(obj, dep);
+    observeArray(obj);
+  } else if (typeof obj === 'object') {
+    observeObject(obj);
+  }
+}
+
+function observeObject(obj: any) {
+  Object.keys(obj).forEach(key => observe(obj, key));
+}
+
+function observeArray(array: any[]) {
+  array.forEach(o => typeof o === 'object' && observeObject(o));
+}
+
+function injectArrayMethods(array: any[], dep: IDependency) {
+  const fakeProto = Object.create(Array.prototype);
+
+  ARRAY_INJECT_METHODS.forEach(method => {
+    Object.defineProperty(fakeProto, method, {
+      value(...args: any[]) {
+        Array.prototype[method].apply(this, args);
+
+        let inserts: any[] | null = null;
+        if (method === 'push' || method === 'unshift') {
+          inserts = args;
+        } else if (method === 'splice') {
+          inserts = args.slice(2);
+        }
+
+        if (inserts && inserts.length !== 0) {
+          observeArray(inserts);
+        }
+
+        dep.invoke();
+      },
+    });
+  });
+
+  Object.setPrototypeOf(array, fakeProto);
 }
