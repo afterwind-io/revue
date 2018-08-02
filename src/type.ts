@@ -180,6 +180,8 @@ export interface IFiber {
 
   effectTag: FiberEffectTag;
   effects: IFiber[];
+
+  destory(): void;
 }
 
 /**
@@ -206,6 +208,7 @@ export interface IRevue<P = any> {
   $fiber: IFiber;
   $rootFiber: IFiber;
 
+  $destory(): void;
   destoryed(): void;
 
   render(): IElement | IElement[];

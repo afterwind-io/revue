@@ -14,8 +14,9 @@ import {
   IElement,
 } from './type';
 import { scheduleWork } from './scheduler';
-import { isElementTypeFn } from './util';
+import { isElementTypeFn, fiberWalker, isFunction } from './util';
 import { createChildElements } from './element';
+import * as Channel from './channel';
 
 interface IFiberOptions extends Partial<IFiber> { }
 
@@ -55,6 +56,19 @@ class Fiber implements IFiber {
 
   public static clone(fiber: Fiber): Fiber {
     return new Fiber(fiber);
+  }
+
+  public destory() {
+    fiberWalker(this, (fiber: IFiber) => {
+      Channel.emit(fiber.id);
+      Channel.close(fiber.id);
+
+      if (isFunction(fiber.type) && (fiber.type as any).isConstructor) {
+        (fiber.stateNode as IRevue).$destory();
+      }
+
+      return true;
+    });
   }
 
   private linkMediator(mediator: IElementMediator) {

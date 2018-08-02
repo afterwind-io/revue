@@ -27,7 +27,7 @@ class Dependency implements IDependency {
   public value: any = null;
 
   constructor() {
-    Channel.create(this.id);
+    Channel.open(this.id);
   }
 
   public addDependency(mediator: IMediator) {
@@ -61,12 +61,22 @@ class Dependency implements IDependency {
       if (mediator.update) mediator.update(this.id, combinedEffectTag);
       console.log(`[Channel] Data: ${this.id} -> Fiber: ${mediator.id}, Payload: `, combinedEffectTag);
     });
+
+    Channel.subscribe(mediator.id, this.id, () => {
+      this.removeDependency(mediator.id);
+      console.log(`[Channel] Data: ${this.id} -X- Fiber: ${mediator.id}`);
+    });
   }
 
   private addDataDependency(mediator: IMediator) {
     Channel.subscribe(this.id, mediator.id, () => {
       if (mediator.update) mediator.update(this.id, this.value);
       console.log(`[Channel] Data: ${this.id} -> Data: ${mediator.id}, Payload: `, this.value);
+    });
+
+    Channel.subscribe(mediator.id, this.id, () => {
+      this.removeDependency(mediator.id);
+      console.log(`[Channel] Data: ${this.id} -X- Data: ${mediator.id}`);
     });
   }
 }

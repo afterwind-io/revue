@@ -3,6 +3,7 @@ import {
   Serializable,
   ElementTypeFn,
   IRevueConstructor,
+  IFiber,
 } from './type';
 
 // tslint:disable-next-line:no-empty
@@ -64,4 +65,30 @@ export function findNreplace<T>(arr: T[], source: T, predicate: (el: T) => boole
 export function findNdelete<T>(array: T[], predicate: (value: T, index: number) => boolean) {
   const index = array.findIndex(predicate);
   if (index !== -1) array.splice(index, 1);
+}
+
+export function fiberWalker(fiber: IFiber, cb: (fiber: IFiber) => boolean) {
+  let next: IFiber | null = fiber;
+  while (next) {
+    if (!cb(next)) return;
+
+    if (next.child) {
+      next = next.child;
+    } else if (next.sibling) {
+      next = next.sibling;
+    } else {
+      next = next.parent;
+
+      while (next) {
+        if (next === fiber) return;
+
+        if (next.sibling) {
+          next = next.sibling;
+          break;
+        } else {
+          next = next.parent;
+        }
+      }
+    }
+  }
 }

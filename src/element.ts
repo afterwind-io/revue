@@ -20,6 +20,7 @@ import {
   toPlainString,
   isElementTypeFn,
 } from './util';
+import * as Channel from './channel';
 
 /**
  * 创建element
@@ -132,8 +133,11 @@ function createMediator(meta?: IElementMeta): IElementMediator {
     children: [],
   };
 
+  const id = getUid();
+  Channel.open(id);
+
   return pureObject<IElementMediator>({
-    id: getUid(),
+    id,
     type: MediatorType.Element,
     effectTag: MediatorEffectTag.Unknown,
     relations: {},

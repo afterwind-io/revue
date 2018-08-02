@@ -10,13 +10,12 @@ interface ISubscriber extends ISubscribeHandler {
 
 const channels: INumericDictionary<ISubscriber[]> = Object.create(null);
 
-export function create(key: Channel) {
+export function open(key: Channel) {
   if (key in channels) return;
-
   channels[key] = [];
 }
 
-export function remove(key: Channel) {
+export function close(key: Channel) {
   channels[key].length = 0;
   delete channels[key];
 }

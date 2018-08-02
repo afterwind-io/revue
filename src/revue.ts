@@ -11,6 +11,7 @@ import { observe } from './reactive';
 import { Fiber } from './fiber';
 import { scheduleWork } from './scheduler';
 import { noop } from './util';
+import * as Channel from './channel';
 
 export function mount(el: string | HTMLElement, ...children: IElement[]) {
   let hostDom;
@@ -36,6 +37,8 @@ export class Revue<P = any> implements IRevue<P> {
   public props: P;
   public $fiber: IFiber = new Fiber();
   public $rootFiber: IFiber = new Fiber();
+
+  private $mediators: IMediator[] = [];
 
   /**
    * 需要做响应式处理的字段名称数组
@@ -72,8 +75,15 @@ export class Revue<P = any> implements IRevue<P> {
     this.observeEmits();
   }
 
+  public $destory() {
+    this.$mediators.forEach(mediator => {
+      Channel.emit(mediator.id);
+      Channel.close(mediator.id);
+    });
+  }
+
   public destoryed() {
-    // TODO: 如何删除props的依赖关系？
+    return;
   }
 
   public render(): IElement | IElement[] {
@@ -87,14 +97,17 @@ export class Revue<P = any> implements IRevue<P> {
 
   private observeProps() {
     const props = this.$props || [];
+
     props.forEach(key => {
-      // TODO: 将mediator缓存至$props以便在实例销毁时清除依赖
       const mediator: IMediator = Shares.targetMediator = {
         id: getUid(),
         type: MediatorType.Data,
         relations: {},
         update: (depId: number, value: any) => this[key] = this.props[key](),
       };
+
+      this.$mediators.push(mediator);
+      Channel.open(mediator.id);
 
       this[key] = this.props[key]();
       observe(this, key);

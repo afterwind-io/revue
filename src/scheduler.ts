@@ -31,7 +31,7 @@ let nextWorkUnit: IFiber | null;
 let targetWorkUnit: IFiber | null;
 let pendingCommit: IFiber | null;
 
-Channel.create(CHANNEL_INSPECTOR);
+Channel.open(CHANNEL_INSPECTOR);
 
 export function scheduleWork(work: IWorkUnit) {
   workQueue.push(work);
@@ -187,6 +187,7 @@ function reconcileChildrenArray(wipFiber: IFiber, children: IElement[]) {
         prevFiber.sibling = null;
       }
 
+      oldFiber.destory();
       wipFiber.effects.push(oldFiber);
     }
 
