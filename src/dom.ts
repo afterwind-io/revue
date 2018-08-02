@@ -19,6 +19,10 @@ export function createDomElement(fiber: IFiber): IFiberReferencedElement {
   return el;
 }
 
+export function createVirtualDomElement(fiber: IFiber): IFiberReferencedElement {
+  return document.createComment(`Virtual ${fiber.id} End`);
+}
+
 export function updateDomAttributes(el: HTMLElement, attrs: IDictionary): HTMLElement {
   Object.entries(attrs).forEach(([key, value]) => {
     if (key === 'children') return;

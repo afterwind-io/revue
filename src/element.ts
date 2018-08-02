@@ -107,7 +107,7 @@ function createVirtualElement(childFn: ElementChildFn): IElement {
 
   return pureObject<IElement>({
     virtual: true,
-    type: ElementType.UNKNOWN,
+    type: ElementType.COMMENT,
     props: { children },
     mediator,
   });

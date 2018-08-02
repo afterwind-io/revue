@@ -9,7 +9,12 @@ import {
   MediatorEffectTag,
 } from './type';
 import { Fiber } from './fiber';
-import { createDomElement, updateDomAttributes, appendChildren } from './dom';
+import {
+  createDomElement,
+  createVirtualDomElement,
+  updateDomAttributes,
+  appendChildren,
+} from './dom';
 import * as Channel from './channel';
 import { Shares, CHANNEL_INSPECTOR } from './global';
 
@@ -279,13 +284,13 @@ function commitWork(fiber: IFiber) {
 
   const domParent = domParentFiber.stateNode as HTMLElement;
 
-  if (fiber.effectTag === FiberEffectTag.CREATE && fiber.tag === FiberTag.HOST_COMPONENT) {
+  if (fiber.effectTag === FiberEffectTag.CREATE) {
     commitCreate(fiber, domParent);
-  } else if (fiber.effectTag === FiberEffectTag.UPDATE) {
+  } else if (fiber.effectTag === FiberEffectTag.UPDATE && fiber.tag === FiberTag.HOST_COMPONENT) {
     updateDomAttributes(fiber.stateNode as HTMLElement, fiber.props);
   } else if (fiber.effectTag === FiberEffectTag.DELETION) {
     commitDeletion(fiber, domParent);
-  } else if (fiber.effectTag === FiberEffectTag.REPLACE) {
+  } else if (fiber.effectTag === FiberEffectTag.REPLACE && fiber.tag === FiberTag.HOST_COMPONENT) {
     commitReplace(fiber, domParent);
   }
 
@@ -293,8 +298,25 @@ function commitWork(fiber: IFiber) {
 }
 
 function commitCreate(fiber: IFiber, domParent: HTMLElement) {
-  fiber.stateNode = createDomElement(fiber);
-  domParent.appendChild(fiber.stateNode as Node);
+  if (fiber.tag === FiberTag.VIRTUAL) {
+    fiber.stateNode = createVirtualDomElement(fiber);
+  } else if (fiber.tag === FiberTag.HOST_COMPONENT) {
+    fiber.stateNode = createDomElement(fiber);
+  } else {
+    return;
+  }
+
+  if (fiber.parent!.tag === FiberTag.VIRTUAL) {
+    // 如果fiber的父级是一个virtual fiber，
+    // 则domParent所对应的fiber必定在父级virtual fiber之上。
+    // 因为父级virtual fiber在siblings中的位置不确定，
+    // 直接在domParent上追加节点可能导致元素位置错乱，
+    // 故以父级virtual fiber所对应的Comment节点位置为界，
+    // 在该Comment前增加元素以确保插入位置正确。
+    domParent.insertBefore(fiber.stateNode, fiber.parent!.stateNode as Comment);
+  } else {
+    domParent.appendChild(fiber.stateNode as Node);
+  }
 }
 
 function commitReplace(fiber: IFiber, domParent: HTMLElement) {
