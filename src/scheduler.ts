@@ -10,6 +10,8 @@ import {
 } from './type';
 import { Fiber } from './fiber';
 import { createDomElement, updateDomAttributes, appendChildren } from './dom';
+import * as Channel from './channel';
+import { Shares, CHANNEL_INSPECTOR } from './global';
 
 interface IWorkUnit {
   tag: FiberTag;
@@ -23,6 +25,8 @@ const workQueue: IWorkUnit[] = [];
 let nextWorkUnit: IFiber | null;
 let targetWorkUnit: IFiber | null;
 let pendingCommit: IFiber | null;
+
+Channel.create(CHANNEL_INSPECTOR);
 
 export function scheduleWork(work: IWorkUnit) {
   workQueue.push(work);
@@ -139,6 +143,7 @@ function updateClassComponent(workUnit: IFiber) {
     instance = workUnit.stateNode = createInstance(workUnit);
   }
 
+  // TODO: render支持包含ElementChildFn的数组？
   const newChildElements: IElement[] = ([] as IElement[]).concat(instance.render());
   reconcileChildrenArray(workUnit, newChildElements);
 }
@@ -243,29 +248,24 @@ function commitAllWork() {
   });
   pendingCommit!.effects = [];
 
+  if (Shares.isDevelop) {
+    Channel.emit(CHANNEL_INSPECTOR, getRoot(targetWorkUnit as IFiber));
+  }
+
   pendingCommit = null;
   nextWorkUnit = null;
+  targetWorkUnit = null;
 
-  /**
-   * TODO: Test Only -----------------------------
-   */
   function getRoot(fiber: IFiber) {
     let f = fiber;
     while (f) {
       if (f.parent) {
         f = f.parent;
       } else {
-        break;
+        return f;
       }
     }
-    return f;
   }
-  (window as any)._visualize(getRoot(targetWorkUnit as IFiber));
-  /**
-   * ---------------------------------------------
-   */
-
-  targetWorkUnit = null;
 }
 
 function commitWork(fiber: IFiber) {

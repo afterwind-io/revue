@@ -9,10 +9,14 @@ import { IMediator } from './type';
 let uid: number = 0;
 export const getUid = () => ++uid;
 
+export const CHANNEL_INSPECTOR = -1;
+
 interface IShares {
+  isDevelop: boolean;
   targetMediator: IMediator | null;
 }
 
 export const Shares: IShares = {
+  isDevelop: true,
   targetMediator: null,
 };

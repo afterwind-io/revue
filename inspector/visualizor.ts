@@ -1,22 +1,24 @@
-import './visualizor.css';
+import './inspector.css';
 import { IFiber, ElementType, FiberTag } from '../src/type';
+import * as Channel from '../src/channel';
+import { CHANNEL_INSPECTOR, getUid } from '../src/global';
 
-const elIndicator: HTMLElement = h('div', 'visualizor-indicator');
+const elIndicator: HTMLElement = h('div', 'inspector-indicator');
 let rootElement: HTMLElement | null = null;
 
 document.body.appendChild(elIndicator);
 
-(window as any)._visualize = function visualize(fiber: IFiber) {
+Channel.subscribe(CHANNEL_INSPECTOR, getUid(), (fiber: IFiber) => {
   if (rootElement) {
     document.body.removeChild(rootElement);
   }
 
-  rootElement = h('div', 'visualizor');
+  rootElement = h('div', 'inspector');
 
   genTree(fiber);
 
   document.body.appendChild(rootElement!);
-};
+})
 
 function genTree(fiber: IFiber) {
   let level: number = 0;
@@ -104,7 +106,7 @@ function getFiberClass(fiber: IFiber): string {
 }
 
 function showIndicator(fiber: IFiber) {
-  elIndicator.classList.toggle('visualizor-indicator--visible', true);
+  elIndicator.classList.toggle('inspector-indicator--visible', true);
 
   const target = fiber.stateNode as HTMLElement;
   const { left, top, width, height } = target.getBoundingClientRect();
@@ -115,7 +117,7 @@ function showIndicator(fiber: IFiber) {
 }
 
 function hideIndicator() {
-  elIndicator.classList.toggle('visualizor-indicator--visible', false);
+  elIndicator.classList.toggle('inspector-indicator--visible', false);
 }
 
 function h(type: string, className: string, ...children: Array<string | Node | undefined>) {

@@ -10,8 +10,8 @@
   --fiber-indicator-border:rgba(255, 125, 0, 0.7);
 }
 
-.visualizor {
-  padding: 16px;
+.inspector {
+  padding: 0 16px;
   flex: 1 0 50%;
   height: 100%;
   border-left: 1px solid gray;
@@ -20,12 +20,20 @@
   overflow: scroll;
 }
 
-.visualizor * {
+.inspector * {
   margin: 0;
   padding: 0;
 }
 
-.visualizor-indicator {
+.inspector h1 {
+  text-align: center;
+  font-weight: 100;
+  font-size: 36px;
+  line-height: 1;
+  margin: 40px 0;
+}
+
+.inspector-indicator {
   position: fixed;
   background-color: var(--fiber-indicator-background);
   border: 2px solid var(--fiber-indicator-border);
@@ -36,24 +44,24 @@
   pointer-events: none;
 }
 
-.visualizor-indicator--visible {
+.inspector-indicator--visible {
   opacity: 1;
 }
 
 .fiber {
   position: sticky;
-  top: 0;
+  top: 8px;
   margin: 8px 0;
   width: 200px;
   border-radius: 4px;
-  box-shadow: 0 0 2px 0px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 0 1px 0px rgba(0, 0, 0, 0.6);
   cursor: pointer;
   transition: 200ms;
   overflow: hidden;
 }
 
 .fiber:hover {
-  box-shadow: 0 1px 6px 0px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 1px 5px 0px rgba(0, 0, 0, 0.35);
   transform: translateY(-2px);
 }
 

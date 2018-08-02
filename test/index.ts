@@ -1,6 +1,7 @@
 import { mount } from '../src/revue';
 import { createElement as h } from '../src/element';
-import './visualizor';
+import '../inspector/visualizor';
+// import '../inspector';
 import './index.css';
 
 import App from './app';
