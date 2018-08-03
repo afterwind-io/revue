@@ -23,7 +23,6 @@ export function mount(el: string | HTMLElement, ...children: IElement[]) {
 
   if (!el) throw new Error();
 
-  // TODO
   scheduleWork({
     tag: FiberTag.HOST_ROOT,
     hostDom,
@@ -75,11 +74,13 @@ export class Revue<P = any> implements IRevue<P> {
     this.observeEmits();
   }
 
+  public $updateProps() {
+    this.disposeProps();
+    this.observeProps();
+  }
+
   public $destory() {
-    this.$mediators.forEach(mediator => {
-      Channel.emit(mediator.id);
-      Channel.close(mediator.id);
-    });
+    this.disposeProps();
   }
 
   public destoryed() {
@@ -123,5 +124,13 @@ export class Revue<P = any> implements IRevue<P> {
         value: (this.props as any)[key] || noop,
       }),
     );
+  }
+
+  private disposeProps() {
+    this.$mediators.forEach(mediator => {
+      Channel.emit(mediator.id);
+      Channel.close(mediator.id);
+    });
+    this.$mediators = [];
   }
 }

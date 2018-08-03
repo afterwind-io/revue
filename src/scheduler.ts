@@ -124,7 +124,9 @@ function updateHostComponent(wipFiber: IFiber) {
 
     if (effectTag & MediatorEffectTag.Type) {
       wipFiber.effectTag = FiberEffectTag.REPLACE;
-    } else if (effectTag & MediatorEffectTag.Prop) {
+    }
+
+    if (effectTag & MediatorEffectTag.Prop) {
       wipFiber.effectTag = FiberEffectTag.UPDATE;
     }
 
@@ -148,9 +150,18 @@ function updateClassComponent(workUnit: IFiber) {
     instance = workUnit.stateNode = createInstance(workUnit);
   }
 
-  // TODO: render支持包含ElementChildFn的数组？
-  const newChildElements: IElement[] = ([] as IElement[]).concat(instance.render());
-  reconcileChildrenArray(workUnit, newChildElements);
+  switch (targetWorkUnit!.tag) {
+    case FiberTag.VIRTUAL:
+      instance.props = workUnit.props;
+      instance.$updateProps();
+    case FiberTag.HOST_ROOT:
+      // TODO: render支持包含ElementChildFn的数组？
+      const newChildElements: IElement[] = ([] as IElement[]).concat(instance.render());
+      reconcileChildrenArray(workUnit, newChildElements);
+      break;
+    default:
+      break;
+  }
 }
 
 function createInstance(fiber: IFiber) {
@@ -159,10 +170,6 @@ function createInstance(fiber: IFiber) {
   instance.$fiber = fiber;
   return instance;
 }
-
-/**
- * -------------------------------TODO------------------------------------
- */
 
 function reconcileChildrenArray(wipFiber: IFiber, children: IElement[]) {
   let oldFiber: IFiber | null = wipFiber.child;
@@ -174,9 +181,11 @@ function reconcileChildrenArray(wipFiber: IFiber, children: IElement[]) {
     const element: IElement | undefined = children[index];
 
     if (oldFiber && element && oldFiber.type === element.type) {
+      oldFiber.element = element;
       oldFiber.props = element.props;
-      oldFiber.mediator = element.mediator;
       oldFiber.effectTag = FiberEffectTag.UPDATE;
+      oldFiber.linkMediator(element.mediator);
+
       newFiber = oldFiber;
     }
 
@@ -191,7 +200,7 @@ function reconcileChildrenArray(wipFiber: IFiber, children: IElement[]) {
       wipFiber.effects.push(oldFiber);
     }
 
-    if (!oldFiber && element) {
+    if (element && (!oldFiber || oldFiber && oldFiber.type !== element.type)) {
       newFiber = new Fiber({
         tag:
           element.virtual
@@ -287,11 +296,15 @@ function commitWork(fiber: IFiber) {
 
   if (fiber.effectTag === FiberEffectTag.CREATE) {
     commitCreate(fiber, domParent);
-  } else if (fiber.effectTag === FiberEffectTag.UPDATE && fiber.tag === FiberTag.HOST_COMPONENT) {
-    updateDomAttributes(fiber.stateNode as HTMLElement, fiber.props);
   } else if (fiber.effectTag === FiberEffectTag.DELETION) {
     commitDeletion(fiber, domParent);
-  } else if (fiber.effectTag === FiberEffectTag.REPLACE && fiber.tag === FiberTag.HOST_COMPONENT) {
+  }
+
+  if (fiber.effectTag & FiberEffectTag.UPDATE && fiber.tag === FiberTag.HOST_COMPONENT) {
+    updateDomAttributes(fiber.stateNode as HTMLElement, fiber.props);
+  }
+
+  if (fiber.effectTag & FiberEffectTag.REPLACE && fiber.tag === FiberTag.HOST_COMPONENT) {
     commitReplace(fiber, domParent);
   }
 
@@ -338,7 +351,6 @@ function commitDeletion(fiber: IFiber, domParent: HTMLElement) {
 
     domParent.removeChild(node.stateNode as Node);
 
-    // ?????
     while (node !== fiber && !node.sibling) {
       node = node.parent as IFiber;
     }

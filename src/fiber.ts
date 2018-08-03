@@ -71,7 +71,7 @@ class Fiber implements IFiber {
     });
   }
 
-  private linkMediator(mediator: IElementMediator) {
+  public linkMediator(mediator: IElementMediator) {
     this.mediator = mediator;
     this.id = mediator.id;
 

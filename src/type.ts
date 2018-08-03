@@ -181,6 +181,7 @@ export interface IFiber {
   effectTag: FiberEffectTag;
   effects: IFiber[];
 
+  linkMediator(mediator: IMediator): void;
   destory(): void;
 }
 
@@ -208,6 +209,7 @@ export interface IRevue<P = any> {
   $fiber: IFiber;
   $rootFiber: IFiber;
 
+  $updateProps(): void;
   $destory(): void;
   destoryed(): void;
 
