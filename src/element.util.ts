@@ -3,8 +3,9 @@ import {
   ElementChild,
   ElementPropFn,
   ElementType,
+  ElementChildFn,
 } from './type';
-import { createElement as h } from './element';
+import { createElement as h, createVirtualElement } from './element';
 
 function el(type: string) {
   return (propfn: ElementPropFn | null, ...children: ElementChild[]): IElement => {
@@ -12,8 +13,12 @@ function el(type: string) {
   };
 }
 
-export function text(contentFn: () => any) {
+export function text(contentFn: () => any): IElement {
   return h(ElementType.TEXT, () => ({ textContent: contentFn() }));
+}
+
+export function virtual(contentFn: ElementChildFn): IElement {
+  return createVirtualElement(contentFn);
 }
 
 export const button = el('button');

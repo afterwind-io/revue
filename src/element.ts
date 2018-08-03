@@ -99,7 +99,7 @@ function createEmptyElement(
   });
 }
 
-function createVirtualElement(childFn: ElementChildFn): IElement {
+export function createVirtualElement(childFn: ElementChildFn): IElement {
   const mediator = Shares.targetMediator = createMediator();
   mediator.effectTag = MediatorEffectTag.Child;
   mediator.meta.children = [childFn];

@@ -155,10 +155,8 @@ function updateClassComponent(workUnit: IFiber) {
       instance.props = workUnit.props;
       instance.$updateProps();
     case FiberTag.HOST_ROOT:
-      // TODO: render支持包含ElementChildFn的数组？
       const newChildElements: IElement[] = ([] as IElement[]).concat(instance.render());
       reconcileChildrenArray(workUnit, newChildElements);
-      break;
     default:
       break;
   }
