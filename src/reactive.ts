@@ -17,6 +17,7 @@ const ARRAY_INJECT_METHODS: string[] = [
   'sort',
   'reverse',
 ];
+const OBSERVED_MARKER = '__observed__';
 
 function isElementMediator(mediator: IMediator): mediator is IElementMediator {
   return mediator.type === MediatorType.Element;
@@ -24,9 +25,13 @@ function isElementMediator(mediator: IMediator): mediator is IElementMediator {
 
 class Dependency implements IDependency {
   public id: number = getUid();
+  public target: string = '';
   public value: any = null;
 
-  constructor() {
+  constructor(target: object, key: string) {
+    this.target = this.getClassName(target) + '.' + key;
+    this.value = target[key];
+
     Channel.open(this.id);
   }
 
@@ -59,47 +64,65 @@ class Dependency implements IDependency {
     // 当前element的临时缓存值，在后续操作中可能发生变动
     Channel.subscribe(this.id, mediator.id, () => {
       if (mediator.update) mediator.update(this.id, combinedEffectTag);
-      console.log(`[Channel] Data: ${this.id} -> Fiber: ${mediator.id}, Payload: `, combinedEffectTag);
+      console.log(`[Channel] Data: ${this.target}[${this.id}] -> Fiber: ${mediator.id}, Payload: `, combinedEffectTag);
     });
 
     Channel.subscribe(mediator.id, this.id, () => {
       this.removeDependency(mediator.id);
-      console.log(`[Channel] Data: ${this.id} -X- Fiber: ${mediator.id}`);
+      console.log(`[Channel] Data: ${this.target}[${this.id}] -X- Fiber: ${mediator.id}`);
     });
   }
 
   private addDataDependency(mediator: IMediator) {
     Channel.subscribe(this.id, mediator.id, () => {
       if (mediator.update) mediator.update(this.id, this.value);
-      console.log(`[Channel] Data: ${this.id} -> Data: ${mediator.id}, Payload: `, this.value);
+      console.log(`[Channel] Data: ${this.target}[${this.id}] -> Data: ${mediator.id}, Payload: `, this.value);
     });
 
     Channel.subscribe(mediator.id, this.id, () => {
       this.removeDependency(mediator.id);
-      console.log(`[Channel] Data: ${this.id} -X- Data: ${mediator.id}`);
+      console.log(`[Channel] Data: ${this.target}[${this.id}] -X- Data: ${mediator.id}`);
     });
+  }
+
+  private getClassName(obj: object) {
+    const constructor = obj.constructor;
+
+    if (constructor && constructor !== Object) {
+      return constructor.name;
+    } else {
+      return '{}';
+    }
   }
 }
 
-export function observe(obj: any, key: string) {
-  const dep: IDependency = new Dependency();
-  dep.value = obj[key];
+export function observe(obj: any, key: string): IDependency | undefined {
+  if (hasObserved(obj, key)) return;
+
+  const dep: IDependency = new Dependency(obj, key);
 
   // TODO: 缓存用户设定的getter, setter
   // const originGetter = ...
 
-  // TODO: 如何判定某个对象已被观测过，以避免陷入循环引用？
+  defineProperty(obj, key, dep);
 
   if (dep.value !== undefined) {
     makeReactive(dep.value, dep);
   }
 
+  markObserved(obj, key);
+
+  return dep;
+}
+
+function defineProperty(obj: any, key: string, dep: IDependency) {
   Object.defineProperty(obj, key, {
     get() {
       const mediator = Shares.targetMediator;
       if (mediator) {
         dep.addDependency(mediator);
-        console.log(`[Dependency] Key: "${key}", Id: "${dep.id}", Mediator: "${mediator.id}"`);
+
+        console.log(`[Dependency] "${dep.target}"[${dep.id}] <- Mediator[${mediator.id}]`);
       }
 
       return dep.value;
@@ -107,16 +130,18 @@ export function observe(obj: any, key: string) {
     set(value: any) {
       if (value !== dep.value) {
         makeReactive(value, dep);
-      }
 
-      dep.value = value;
-      dep.invoke();
+        dep.value = value;
+        dep.invoke();
+      }
     },
     enumerable: false,
   });
 }
 
 function makeReactive(obj: any, dep: IDependency) {
+  if (!canObserve(obj)) return;
+
   if (Array.isArray(obj)) {
     injectArrayMethods(obj, dep);
     observeArray(obj);
@@ -130,7 +155,7 @@ function observeObject(obj: any) {
 }
 
 function observeArray(array: any[]) {
-  array.forEach(o => typeof o === 'object' && observeObject(o));
+  array.forEach(o => canObserve(o) && observeObject(o));
 }
 
 function injectArrayMethods(array: any[], dep: IDependency) {
@@ -158,4 +183,20 @@ function injectArrayMethods(array: any[], dep: IDependency) {
   });
 
   Object.setPrototypeOf(array, fakeProto);
+}
+
+function markObserved(obj: any, key: string) {
+  if (!obj[OBSERVED_MARKER]) {
+    Object.defineProperty(obj, OBSERVED_MARKER, { value: {} });
+  }
+
+  obj[OBSERVED_MARKER][key] = true;
+}
+
+function hasObserved(obj: any, key: string) {
+  return !!obj[OBSERVED_MARKER] && obj[OBSERVED_MARKER][key];
+}
+
+function canObserve(obj: any) {
+  return typeof obj === 'object' && !!obj;
 }
