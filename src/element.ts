@@ -105,6 +105,7 @@ export function createVirtualElement(childFn: ElementChildFn): IElement {
   mediator.meta.children = [childFn];
 
   const children = ([] as IElement[]).concat(createChildElement(childFn()));
+  Shares.targetMediator = null;
 
   return pureObject<IElement>({
     virtual: true,
