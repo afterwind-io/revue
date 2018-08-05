@@ -10,7 +10,7 @@ import { getUid, Shares } from './global';
 import { observe } from './reactive';
 import { Fiber } from './fiber';
 import { scheduleWork } from './scheduler';
-import { noop } from './util';
+import { noop, fiberWalker } from './util';
 import * as Channel from './channel';
 
 export function mount(el: string | HTMLElement, ...children: IElement[]) {
@@ -37,7 +37,7 @@ export class Revue<P = any> implements IRevue<P> {
   public $fiber: IFiber = new Fiber();
   public $rootFiber: IFiber = new Fiber();
 
-  private $mediators: IMediator[] = [];
+  private $propMediators: IMediator[] = [];
 
   /**
    * 需要做响应式处理的字段名称数组
@@ -69,18 +69,32 @@ export class Revue<P = any> implements IRevue<P> {
   constructor(props?: P) {
     this.props = props || {} as P;
 
-    this.observeSelf();
-    this.observeProps();
-    this.observeEmits();
+    this.$observeSelf();
+    this.$observeProps();
+    this.$hookEmits();
   }
 
   public $updateProps() {
-    this.disposeProps();
-    this.observeProps();
+    this.$disposePropMediators();
+
+    // TODO: 是否有更好的实现方式？
+
+    // HACK: 在props值被刷新的过程中，会触发所有prop重新取值，
+    // 导致即将被删除的所有子代节点被更新（如果该节点依赖于某个prop）
+    // 因此在刷新前断开所有子节点的update函数避免多余更新
+    if (this.$fiber.child) {
+      fiberWalker(this.$fiber.child, fiber => {
+        fiber.mediator!.update = undefined;
+
+        return true;
+      });
+    }
+
+    this.$observeProps();
   }
 
   public $destory() {
-    this.disposeProps();
+    this.$disposePropMediators();
   }
 
   public destoryed() {
@@ -91,12 +105,12 @@ export class Revue<P = any> implements IRevue<P> {
     return [];
   }
 
-  private observeSelf() {
+  private $observeSelf() {
     const observables = this.$observables || [];
     observables.forEach(key => observe(this, key));
   }
 
-  private observeProps() {
+  private $observeProps() {
     const props = this.$props || [];
 
     props.forEach(key => {
@@ -107,17 +121,19 @@ export class Revue<P = any> implements IRevue<P> {
         update: (depId: number, value: any) => this[key] = this.props[key](),
       };
 
-      this.$mediators.push(mediator);
+      this.$propMediators.push(mediator);
       Channel.open(mediator.id);
 
+      console.log(`------Prop: "${this.constructor.name}.${key}"`);
       this[key] = this.props[key]();
       observe(this, key);
+      console.log('------Prop End');
 
       Shares.targetMediator = null;
     });
   }
 
-  private observeEmits() {
+  private $hookEmits() {
     const emits = this.$emits || [];
     emits.forEach(key =>
       Object.defineProperty(this, key, {
@@ -126,11 +142,13 @@ export class Revue<P = any> implements IRevue<P> {
     );
   }
 
-  private disposeProps() {
-    this.$mediators.forEach(mediator => {
+  private $disposePropMediators() {
+    this.$propMediators.forEach(mediator => {
       Channel.emit(mediator.id);
       Channel.close(mediator.id);
+
+      mediator.update = undefined;
     });
-    this.$mediators = [];
+    this.$propMediators = [];
   }
 }

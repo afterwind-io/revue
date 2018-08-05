@@ -142,6 +142,7 @@ export type ElementChildFn = () => IElement | IElement[] | Serializable;
 
 export interface IDependency {
   id: number;
+  target: string;
   value: any;
   addDependency(mediator: IMediator): void;
   removeDependency(mediatorKey: number): void;
@@ -182,6 +183,7 @@ export interface IFiber {
   effects: IFiber[];
 
   linkMediator(mediator: IMediator): void;
+  unlinkMediator(): void;
   destory(): void;
 }
 

@@ -16,7 +16,7 @@ import {
   appendChildren,
 } from './dom';
 import * as Channel from './channel';
-import { Shares, CHANNEL_INSPECTOR } from './global';
+import { Shares, CHANNEL_INSPECTOR, getUid } from './global';
 
 interface IWorkUnit {
   tag: FiberTag;
@@ -76,6 +76,7 @@ function resetNextWorkUnit() {
 
 function createNewRootFiber(workUnit: IWorkUnit): IFiber {
   return new Fiber({
+    id: getUid(),
     tag: FiberTag.HOST_ROOT,
     stateNode: workUnit.hostDom,
     props: { children: workUnit.childElements },
@@ -179,10 +180,14 @@ function reconcileChildrenArray(wipFiber: IFiber, children: IElement[]) {
     const element: IElement | undefined = children[index];
 
     if (oldFiber && element && oldFiber.type === element.type) {
-      oldFiber.element = element;
-      oldFiber.props = element.props;
-      oldFiber.effectTag = FiberEffectTag.UPDATE;
-      oldFiber.linkMediator(element.mediator);
+      if (oldFiber.mediator!.id !== element.mediator.id) {
+        oldFiber.element = element;
+        oldFiber.props = element.props;
+        oldFiber.effectTag = FiberEffectTag.UPDATE;
+
+        oldFiber.unlinkMediator();
+        oldFiber.linkMediator(element.mediator);
+      }
 
       newFiber = oldFiber;
     }
@@ -195,6 +200,10 @@ function reconcileChildrenArray(wipFiber: IFiber, children: IElement[]) {
       }
 
       oldFiber.destory();
+      if (oldFiber.tag === FiberTag.CLASS_COMPONENT) {
+        (oldFiber.stateNode as IRevue).$destory();
+      }
+
       wipFiber.effects.push(oldFiber);
     }
 

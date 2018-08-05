@@ -14,7 +14,7 @@ import {
   IElement,
 } from './type';
 import { scheduleWork } from './scheduler';
-import { isElementTypeFn, fiberWalker, isFunction } from './util';
+import { isElementTypeFn, fiberWalker } from './util';
 import { createChildElements } from './element';
 import * as Channel from './channel';
 
@@ -58,19 +58,6 @@ class Fiber implements IFiber {
     return new Fiber(fiber);
   }
 
-  public destory() {
-    fiberWalker(this, (fiber: IFiber) => {
-      Channel.emit(fiber.id);
-      Channel.close(fiber.id);
-
-      if (isFunction(fiber.type) && (fiber.type as any).isConstructor) {
-        (fiber.stateNode as IRevue).$destory();
-      }
-
-      return true;
-    });
-  }
-
   public linkMediator(mediator: IElementMediator) {
     this.mediator = mediator;
     this.id = mediator.id;
@@ -105,6 +92,18 @@ class Fiber implements IFiber {
         sourceFiber: this,
       });
     };
+  }
+
+  public unlinkMediator(fiber: IFiber = this) {
+    Channel.emit(fiber.mediator!.id);
+    Channel.close(fiber.mediator!.id);
+
+    fiber.mediator!.update = undefined;
+    fiber.mediator = null;
+  }
+
+  public destory() {
+    fiberWalker(this, fiber => this.unlinkMediator(fiber) || true);
   }
 }
 

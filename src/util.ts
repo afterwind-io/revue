@@ -21,6 +21,10 @@ export function isElementTypeFn(type: ElementTypeFn | string | IRevueConstructor
   return isFunction(type) && !(type as any).isConstructor;
 }
 
+export function isRevueConstructor(type: any): type is IRevueConstructor {
+  return isFunction(type) && (type as any).isConstructor;
+}
+
 export function toPlainString(content: Serializable) {
   if (typeof content === 'object' && content) {
     return content.toString();
