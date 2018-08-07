@@ -12,6 +12,7 @@ import { Fiber } from './fiber';
 import { scheduleWork } from './scheduler';
 import { noop, fiberWalker } from './util';
 import * as Channel from './channel';
+import { IComputedMeta } from './decorators';
 
 export function mount(el: string | HTMLElement, ...children: IElement[]) {
   let hostDom;
@@ -38,6 +39,7 @@ export class Revue<P = any> implements IRevue<P> {
   public $rootFiber: IFiber = new Fiber();
 
   private $propMediators: IMediator[] = [];
+  private $computedMediators: IMediator[] = [];
 
   /**
    * 需要做响应式处理的字段名称数组
@@ -58,6 +60,15 @@ export class Revue<P = any> implements IRevue<P> {
   private $props!: string[];
 
   /**
+   * 用于实例化时处理的computed元数据
+   *
+   * @private
+   * @type {IComputedMeta[]}
+   * @memberof Revue
+   */
+  private $computed!: IComputedMeta[];
+
+  /**
    * 用于实例化时处理的emit元数据
    *
    * @private
@@ -71,11 +82,13 @@ export class Revue<P = any> implements IRevue<P> {
 
     this.$observeSelf();
     this.$observeProps();
+    this.$observeComputed();
     this.$hookEmits();
   }
 
   public $updateProps() {
     this.$disposePropMediators();
+    this.$disposeComputedMediators();
 
     // TODO: 是否有更好的实现方式？
 
@@ -91,6 +104,7 @@ export class Revue<P = any> implements IRevue<P> {
     }
 
     this.$observeProps();
+    this.$observeComputed();
   }
 
   public $destory() {
@@ -133,6 +147,57 @@ export class Revue<P = any> implements IRevue<P> {
     });
   }
 
+  private $observeComputed() {
+    const computed = this.$computed || [];
+
+    computed.forEach(option => {
+      let cachedValue: any;
+      let mediator: IMediator;
+
+      const key = option.key as string;
+
+      const { get: originGetter } = Object.getOwnPropertyDescriptor(
+        Object.getPrototypeOf(this),
+        key,
+      ) as PropertyDescriptor;
+
+      observe(this, key, option.default, originGetter);
+
+      mediator = {
+        id: getUid(),
+        type: MediatorType.Data,
+        relations: {},
+        update: (depId: number, value: any) =>
+          this[key] = cachedValue = originGetter!.call(this),
+      };
+      this.$computedMediators.push(mediator);
+      Channel.open(mediator.id);
+
+      const { get: observedGetter, set } = Object.getOwnPropertyDescriptor(this, key) as PropertyDescriptor;
+      Object.defineProperty(this, key, {
+        get() {
+          if (Shares.targetMediator) {
+            observedGetter!.call(this);
+          }
+
+          if (cachedValue === undefined) {
+            Shares.targetMediator = mediator;
+
+            console.log(`------Computed: "${this.constructor.name}.${key}"`);
+            cachedValue = originGetter!.call(this);
+            console.log('------Computed End');
+          }
+
+          Shares.targetMediator = null;
+
+          return option.cache ? cachedValue : observedGetter!.call(this);
+        },
+        set,
+        configurable: true,
+      });
+    });
+  }
+
   private $hookEmits() {
     const emits = this.$emits || [];
     emits.forEach(key =>
@@ -150,5 +215,15 @@ export class Revue<P = any> implements IRevue<P> {
       mediator.update = undefined;
     });
     this.$propMediators = [];
+  }
+
+  private $disposeComputedMediators() {
+    this.$computedMediators.forEach(mediator => {
+      Channel.emit(mediator.id);
+      Channel.close(mediator.id);
+
+      mediator.update = undefined;
+    });
+    this.$computedMediators = [];
   }
 }
