@@ -1,10 +1,12 @@
 import { mount } from '../src/revue';
 import { createElement as h } from '../src/element';
-import '../inspector/visualizor';
-// import '../inspector';
+// import '../inspector/visualizor';
+import { inspect } from '../inspector';
 import './index.css';
 
 import App from './app';
+
+inspect();
 
 mount('#app', h(App, null));
 

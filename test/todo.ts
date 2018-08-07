@@ -1,12 +1,15 @@
 import { Revue } from '../src/revue';
 import { Prop, Emit } from '../src/decorators';
-import { p, input, text } from '../src/element.util';
+import { p, input, text, virtual } from '../src/element.util';
 
 import { ITodo } from './test.type';
 
 export default class Todo extends Revue {
   @Prop
   private data!: ITodo;
+
+  @Prop
+  private isHappy!: boolean;
 
   @Emit
   private changed!: ((todo: ITodo, isImportant: boolean) => void);
@@ -16,13 +19,14 @@ export default class Todo extends Revue {
   }
 
   public render() {
-    return p(null,
+    return [
       input(() => ({
         type: 'checkbox',
         checked: this.data.isImportant,
         onchange: (e: Event) => this.onImportanceChanged(e)
       })),
       text(() => this.data.work),
-    );
+      virtual(() => this.isHappy ? '\\www/' : ''),
+    ];
   }
 }

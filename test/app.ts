@@ -29,6 +29,7 @@ export default class App extends Revue {
   private todos: ITodo[] = TODOS;
   @Observable
   private todoCache: string = '';
+
   private greeting: string = 'Hello World';
 
   private get title(): string {
@@ -46,10 +47,7 @@ export default class App extends Revue {
   }
 
   private remove(index: number) {
-    // this.todos.splice(index, 1);
-    const copy = [...this.todos]
-    copy.splice(index, 1);
-    this.todos = [...copy];
+    this.todos.splice(index, 1);
   }
 
   private onNameChanged(e: KeyboardEvent) {
@@ -64,7 +62,11 @@ export default class App extends Revue {
     this.todoCache = (e.target as HTMLInputElement).value;
   }
 
-  private onTodoChanged(todo: ITodo, isImportant: boolean) {
+  private onWorkChanged(todo: ITodo, e: KeyboardEvent) {
+    todo.work = (e.target as HTMLInputElement).value;
+  }
+
+  private onImportanceChanged(todo: ITodo, isImportant: boolean) {
     todo.isImportant = isImportant;
   }
 
@@ -87,7 +89,10 @@ export default class App extends Revue {
         'I feel happy now.',
       ),
       () => this.todos.map((t, index) => p(null,
-        text(() => t.work),
+        input(() => ({
+          value: t.work,
+          oninput: (e: KeyboardEvent) => this.onWorkChanged(t, e),
+        })),
         button(
           () => ({
             onclick: () => this.remove(index),
@@ -102,10 +107,8 @@ export default class App extends Revue {
     return [
       h3(null, 'My Todos'),
       input(() => ({
-        domAttr: {
-          value: this.todoCache,
-        },
-        oninput: (e: KeyboardEvent) => this.onTodoCacheChanged(e)
+        value: this.todoCache,
+        oninput: (e: KeyboardEvent) => this.onTodoCacheChanged(e),
       })),
       button(
         () => ({
@@ -113,19 +116,19 @@ export default class App extends Revue {
         }),
         'Add',
       ),
-      this.todos.map((todo, index) =>
+      () => this.todos.map((todo, index) =>
         p(null,
           button(
             () => ({
-              onclick: () => this.remove(index)
+              onclick: () => this.remove(index),
             }),
             'Remove',
           ),
           h(Todo, () => ({
-            data: () => todo,
-            changed: (t: ITodo, isImportant: boolean) => this.onTodoChanged(t, isImportant),
+            data: () => this.isHappy ? todo : { work: '_(:з」∠)_', isImportant: false },
+            isHappy: () => this.isHappy,
+            changed: (t: ITodo, isImportant: boolean) => this.onImportanceChanged(t, isImportant),
           })),
-          // () => todo.work,
         ),
       ),
     ];
@@ -134,7 +137,7 @@ export default class App extends Revue {
   public render() {
     return div(null,
       this.renderHeader(),
-      // this.renderTodos(),
+      this.renderTodos(),
     );
   }
 }
