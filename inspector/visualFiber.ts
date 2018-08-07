@@ -1,6 +1,6 @@
 import { Revue } from '../src/revue';
-import { Prop } from '../src/decorators';
-import { IFiber, FiberTag, ElementType } from '../src/type';
+import { Prop, Emit } from '../src/decorators';
+import { FiberTag, ElementType } from '../src/type';
 import {
   div,
   header,
@@ -9,21 +9,23 @@ import {
   section,
   span,
 } from '../src/element.util';
+import { IFiberSummary } from './inspector.type';
 
 export default class VisualFiber extends Revue {
   @Prop
-  private fiber!: IFiber;
+  private fiber!: IFiberSummary;
 
-  @Prop
-  private level!: number;
+  @Emit
+  private report!: () => void;
+
+  private onFiberClicked() {
+    this.report();
+  }
 
   private get fiberTag(): string {
     return this.fiber.tag === FiberTag.VIRTUAL
       ? 'Virtual'
-      : (typeof this.fiber.type === 'string'
-        ? this.fiber.type
-        : this.fiber.type.name)
-      || 'Root';
+      : this.fiber.type;
   }
 
   private get fiberClass(): string {
@@ -44,7 +46,7 @@ export default class VisualFiber extends Revue {
 
   private get fiberStyle() {
     return {
-      'margin-left': this.level * 40 + 'px',
+      'margin-left': this.fiber.level * 40 + 'px',
     };
   }
 
@@ -54,9 +56,10 @@ export default class VisualFiber extends Revue {
         'Value: ',
       ),
       span(() => ({ class: 'fiber-detail-value' }),
-        text(() => `"${this.fiber.props.textContent}"`),
+        text(() => `"${this.fiber.textContent}"`),
       ),
     );
+    return text(() => 'oh');
   }
 
   private renderOops() {
@@ -73,7 +76,7 @@ export default class VisualFiber extends Revue {
         () => ({
           class: this.fiberClass,
           style: this.fiberStyle,
-          onclick: () => console.log(this.fiber),
+          onclick: () => this.onFiberClicked(),
         }),
         header(() => ({ class: 'fiber-id' }),
           p(null, text(() => this.fiberTag)),

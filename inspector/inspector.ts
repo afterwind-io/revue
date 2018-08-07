@@ -1,37 +1,45 @@
 import { CHANNEL_INSPECTOR, getUid } from '../src/global';
 import { Revue } from '../src/revue';
-import { Observable } from '../src/decorators';
+import { Observable, Computed } from '../src/decorators';
 import { IFiber } from '../src/type';
 import * as Channel from '../src/channel';
-import { h1, div } from '../src/element.util';
+import { h1, div, button, input } from '../src/element.util';
 import { createElement as h } from '../src/element';
 
+import { IFiberSummary } from './inspector.type';
 import VisualFiber from './visualFiber';
 
-interface IExtendedFiber extends IFiber {
-  level: number;
-}
+function flatenFiberTree(fiber: IFiber): [IFiberSummary[], number] {
+  const fibers: IFiberSummary[] = [];
 
-function flatenFiberTree(fiber: IFiber): IExtendedFiber[] {
-  const fibers: IExtendedFiber[] = [];
+  const depth = walkTree(fiber, (f, level) => {
+    fibers.push({
+      tag: f.tag,
+      type: typeof f.type === 'string'
+        ? (f.type || 'Root')
+        : f.type.name,
+      level,
+      id: f.id,
+      textContent: f.props.textContent,
+    });
 
-  walkTree(fiber, (f, level) => {
-    fibers.push(Object.assign(f, { level }));
+    return true;
   });
 
-  return fibers;
+  return [fibers, depth];
 }
 
-function walkTree(fiber: IFiber, cb: (fiber: IFiber, level: number) => void) {
+function walkTree(fiber: IFiber, cb: (fiber: IFiber, level: number) => boolean): number {
   let level: number = 0;
+  let depth: number = 0;
 
   let next: IFiber | null = fiber;
   while (next) {
-    cb(next, level);
+    if (!cb(next, level)) return depth;
 
     if (next.child) {
       next = next.child;
-      level++;
+      depth = ++level;
     } else if (next.sibling) {
       next = next.sibling;
     } else {
@@ -49,13 +57,18 @@ function walkTree(fiber: IFiber, cb: (fiber: IFiber, level: number) => void) {
       }
     }
   }
+
+  return depth;
 }
 
 export default class Inspector extends Revue {
   @Observable
-  private fibers: IExtendedFiber[] = [];
+  private filter: string = '';
+  @Observable
+  private fibers: IFiberSummary[] = [];
 
   private id: number = getUid();
+  private rootFiber: IFiber | null = null;
 
   constructor(props: any) {
     super(props);
@@ -64,17 +77,57 @@ export default class Inspector extends Revue {
       // TODO: 避免自娱自乐，需要更好的实现
       if (root.child === this.$fiber) return;
 
-      this.fibers = flatenFiberTree(root);
+      this.rootFiber = root;
+
+      console.log(root);
     });
+  }
+
+  @Computed({ default: [] })
+  private get filteredFibers(): IFiberSummary[] {
+    return this.fibers.filter(fiber => fiber.id.toString().includes(this.filter));
+  }
+
+  private refresh() {
+    if (this.rootFiber) {
+      [this.fibers] = flatenFiberTree(this.rootFiber);
+    }
+  }
+
+  private onFilterChanged(e: KeyboardEvent) {
+    this.filter = (e.target as HTMLInputElement).value;
+  }
+
+  private onReport(fiber: IFiberSummary) {
+    let rawFiber;
+    walkTree(this.rootFiber!, (f: IFiber) => {
+      rawFiber = f;
+      return f.id !== fiber.id;
+    });
+
+    (window as any).$fiber = rawFiber;
+    console.log('$fiber =', rawFiber);
   }
 
   public render() {
     return div(null,
       h1(null, 'Revue Inspector'),
-      () => this.fibers.map(fiber =>
+      input(
+        () => ({
+          value: this.filter,
+          oninput: (e: KeyboardEvent) => this.onFilterChanged(e),
+        }),
+      ),
+      button(
+        () => ({
+          onclick: () => this.refresh(),
+        }),
+        'refresh',
+      ),
+      () => this.filteredFibers.map(fiber =>
         h(VisualFiber, () => ({
           fiber: () => fiber,
-          level: () => fiber.level,
+          report: () => this.onReport(fiber),
         })),
       ),
     );

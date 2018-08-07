@@ -8,4 +8,6 @@ const root = document.createElement('div');
 root.className = 'inspector';
 document.body.appendChild(root);
 
-mount('.inspector', h(Inspector, null));
+export function inspect() {
+  mount('.inspector', h(Inspector, null));
+}

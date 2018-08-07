@@ -12,7 +12,7 @@
 
 .inspector {
   padding: 0 16px;
-  flex: 1 0 50%;
+  flex: 1 0 33%;
   height: 100%;
   border-left: 1px solid gray;
   color: var(--text-normal);
