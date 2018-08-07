@@ -80,7 +80,11 @@ function createFiberElement(fiber: IFiber, level: number) {
 
   fiberElement.style.marginLeft = level * 40 + 'px';
 
-  fiberElement.addEventListener('click', () => console.log(fiber));
+  fiberElement.addEventListener('click', () => {
+    console.log('$fiber =>', fiber);
+    (window as any).$fiber = fiber;
+  });
+
   if (fiber.stateNode instanceof HTMLElement) {
     fiberElement.addEventListener('mouseenter', () => showIndicator(fiber));
     fiberElement.addEventListener('mouseleave', () => hideIndicator());
