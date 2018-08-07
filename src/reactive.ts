@@ -8,6 +8,8 @@ import {
 import { getUid, Shares } from './global';
 import * as Channel from './channel';
 
+type PropertyGetter = () => any;
+
 const ARRAY_INJECT_METHODS: string[] = [
   'push',
   'unshift',
@@ -26,11 +28,16 @@ function isElementMediator(mediator: IMediator): mediator is IElementMediator {
 class Dependency implements IDependency {
   public id: number = getUid();
   public target: string = '';
-  public value: any = null;
+  public value: any = undefined;
 
-  constructor(target: object, key: string) {
+  constructor(target: object, key: string, defaultValue?: any) {
     this.target = this.getClassName(target) + '.' + key;
-    this.value = target[key];
+
+    try {
+      this.value = target[key];
+    } catch (e) {
+      this.value = defaultValue;
+    }
 
     Channel.open(this.id);
   }
@@ -96,15 +103,16 @@ class Dependency implements IDependency {
   }
 }
 
-export function observe(obj: any, key: string): IDependency | undefined {
+export function observe(
+  obj: any,
+  key: string,
+  defaultValue?: any,
+  getter?: PropertyGetter,
+): IDependency | undefined {
   if (hasObserved(obj, key)) return;
 
-  const dep: IDependency = new Dependency(obj, key);
-
-  // TODO: 缓存用户设定的getter, setter
-  // const originGetter = ...
-
-  defineProperty(obj, key, dep);
+  const dep: IDependency = new Dependency(obj, key, defaultValue);
+  defineProperty(obj, key, dep, getter);
 
   if (dep.value !== undefined) {
     makeReactive(dep.value, dep);
@@ -115,7 +123,20 @@ export function observe(obj: any, key: string): IDependency | undefined {
   return dep;
 }
 
-function defineProperty(obj: any, key: string, dep: IDependency) {
+function defineProperty(
+  obj: any,
+  key: string,
+  dep: IDependency,
+  userGetter?: PropertyGetter,
+) {
+  let getter: PropertyGetter | undefined;
+  let setter: ((value: any) => void) | undefined;
+  const descriptor = Object.getOwnPropertyDescriptor(obj, key);
+  if (descriptor) {
+    getter = userGetter || descriptor.get;
+    setter = descriptor.set;
+  }
+
   Object.defineProperty(obj, key, {
     get() {
       const mediator = Shares.targetMediator;
@@ -125,17 +146,21 @@ function defineProperty(obj: any, key: string, dep: IDependency) {
         console.log(`[Dependency] "${dep.target}"[${dep.id}] <- Mediator[${mediator.id}]`);
       }
 
-      return dep.value;
+      return getter ? getter.call(obj) : dep.value;
     },
     set(value: any) {
-      if (value !== dep.value) {
-        makeReactive(value, dep);
+      if (value === dep.value) return;
 
-        dep.value = value;
-        dep.invoke();
+      makeReactive(value, dep);
+
+      if (setter) {
+        setter.call(value);
       }
+
+      dep.value = value;
+      dep.invoke();
     },
-    enumerable: false,
+    configurable: true,
   });
 }
 
